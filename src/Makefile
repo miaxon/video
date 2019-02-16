@@ -4,7 +4,7 @@ include ../Makefile.inc
 
 prog := vlt
 
-LDFLAGS += -lavformat -lavcodec -lswscale -lavutil -lavfilter -lswresample -lavdevice -pthread -lm -lz -lrt
+LDFLAGS += -lavformat -lavcodec -lswscale -lavutil -lavfilter -lswresample -lavdevice -pthread -lm -lz -lrt -lX11 -llzma -lbz2 -lvdpau
 
 
 .PHONY: all clean

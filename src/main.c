@@ -12,26 +12,27 @@
 #include "log.h"
 #include "vlt.h"
 
-#define DEFAULT_FILE    "../assets/sample.mp4"
-#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
+#define DEFAULT_FILE    "../assets/sample.wmv"
+#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
+//#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
 
 _Noreturn static void err_usage (void);
 _Noreturn static void print_version (void);
 
-static void check_param(param_t *param);
+static void check_param (param_t *param);
 /// Application entry point
 
 /**
- * Main function that parse command line params and then start client
+ * Main function that parse command line params and then start
  */
 int
 main (int argc, char **argv) {
-	
+
 	param_t param = {
 		.file   = NULL,
 		.stream = NULL
 	};
-	
+
 	int longindex, c;
 	const char *optstring = "f:l:s:vh";
 	const struct option longopts[] = {
@@ -42,11 +43,11 @@ main (int argc, char **argv) {
 		{ "help",    no_argument, NULL, 'h'},
 		{ 0, 0, 0, 0}
 	};
-	
+
 	while ((c = getopt_long(argc, argv, optstring, longopts, &longindex)) != -1) {
 		switch (c) {
 			case 's':
-				
+
 				break;
 			case 'f':
 				param.file = optarg;
@@ -58,23 +59,23 @@ main (int argc, char **argv) {
 				err_usage();
 		};
 	};
-	
-	log_start(LOG_OPTS, LOG_FACILITY);	
-	
+
+	log_start(LOG_OPTS, LOG_FACILITY);
+
 	check_param(&param);
 	int result = vlt_start(&param);
-	
+
 	log_stop();
 	return !result;
 }
 
 /// Check params
 
-static void check_param(param_t *param) {
-	if(!param->file) {
+static void check_param (param_t *param) {
+	if (!param->file) {
 		param->file = DEFAULT_FILE;
 	}
-	if(!param->stream) {
+	if (!param->stream) {
 		param->stream = DEFAULT_STREAM;
 	}
 	INFO(
@@ -83,7 +84,7 @@ static void check_param(param_t *param) {
 			"\tstream '%s'\n",
 			param->file,
 			param->stream
-		);
+			);
 }
 
 /// Print usage info and exit

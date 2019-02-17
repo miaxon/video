@@ -26,8 +26,7 @@ vlt_delay (int64_t start_time, AVRational *time_base, int64_t dts)
 }*/
 
 int
-vlt_start (param_t *param)
-{
+vlt_start (param_t *param) {
 	int	ret =  0, frame_num = 0;
 	int64_t start_time = 0;
 	muxer_t	*mux_inp, *mux_out;
@@ -49,7 +48,7 @@ vlt_start (param_t *param)
 	start_time = av_gettime();
 	while ((ret = av_read_frame(mux_inp->ctx_format, pkt)) == 0) {
 
-		INFO("%s %d", "reading frame", pkt->stream_index);
+		INFO("reading packet size %d from stream %d", pkt->size, pkt->stream_index);
 		AVStream *in_stream, *out_stream;
 
 		//FIX No PTS
@@ -76,11 +75,10 @@ vlt_start (param_t *param)
 			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, pkt)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 			}
+			INFO("Sent non video packet %d", pkt->size);
 		}
 		// Decode/Encode video
 		if (in_stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-			
-
 			// Delay
 			AVRational time_base = in_stream->time_base;
 			AVRational time_base_q = {1, AV_TIME_BASE};
@@ -90,10 +88,13 @@ vlt_start (param_t *param)
 				av_usleep(pts_time - now_time);
 
 			// Decode
+
 			INFO("decode video frame %d", mux_inp->ctx_codec_video->frame_number);
 			if ((ret = avcodec_send_packet(mux_inp->ctx_codec_video, pkt)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
 			}
+			INFO("'%s' %d: %s", "avcodec_send_packet", ret, av_err2str(ret));
+
 			while (ret >= 0) {
 				ret = avcodec_receive_frame(mux_inp->ctx_codec_video, frm);
 				if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
@@ -103,12 +104,24 @@ vlt_start (param_t *param)
 				}
 
 			}
+			INFO("'%s' %d: %s", "avcodec_receive_frame", ret, av_err2str(ret));
+			INFO(
+					"Frame %d (type=%c, size=%d bytes) pts %d key_frame %d [DTS %d] format %d",
+					mux_inp->ctx_codec_video->frame_number,
+					av_get_picture_type_char(frm->pict_type),
+					frm->pkt_size,
+					frm->pts,
+					frm->key_frame,
+					frm->coded_picture_number,
+					frm->format
+					);
+
 			INFO("encode video frame %d", mux_inp->ctx_codec_video->frame_number);
 			frm->format = in_stream->codecpar->format;
 			frm->width = in_stream->codecpar->width;
 			frm->height = in_stream->codecpar->height;
 			// Encode
-			
+
 			if ((ret = avcodec_send_frame(mux_out->ctx_codec_video, frm)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "avcodec_send_frame", av_err2str(ret));
 			}
@@ -134,18 +147,17 @@ vlt_start (param_t *param)
 	return ret;
 }
 
-int vlt_start1 (param_t *param)
-{
+int vlt_start1 (param_t *param) {
 	int
 	ret =  0,
-		sid = -1,
-		fid =  0;
+			sid = -1,
+			fid =  0;
 
 	int64_t start_time = 0;
 
 	AVFormatContext
-		*ifmt_ctx = NULL,
-		*ofmt_ctx = NULL;
+			*ifmt_ctx = NULL,
+			*ofmt_ctx = NULL;
 
 	AVOutputFormat *ofmt = NULL;
 	AVPacket pkt;
@@ -191,8 +203,8 @@ int vlt_start1 (param_t *param)
 	for (int i = 0; i < ifmt_ctx->nb_streams; i++) {
 		//Create output AVStream according to input AVStream
 		AVStream
-			*in_stream  = NULL,
-			*out_stream = NULL;
+				*in_stream  = NULL,
+				*out_stream = NULL;
 
 		in_stream  = ifmt_ctx->streams[i];
 		out_stream = avformat_new_stream(ofmt_ctx, icdc);
@@ -229,8 +241,8 @@ int vlt_start1 (param_t *param)
 	start_time = av_gettime();
 	while (1) {
 		AVStream
-			*in_stream,
-			*out_stream;
+				*in_stream,
+				*out_stream;
 		//Get an AVPacket
 		;
 		if ( (ret = av_read_frame(ifmt_ctx, &pkt)) < 0)

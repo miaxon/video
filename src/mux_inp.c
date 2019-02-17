@@ -3,8 +3,7 @@
 #include "log.h"
 
 muxer_t*
-mux_inp_new (const char* name)
-{
+mux_inp_new (const char* name) {
 	muxer_t *mux = NULL;
 	int	ret = 0;
 
@@ -49,13 +48,14 @@ mux_inp_new (const char* name)
 	if ((ret = avcodec_parameters_to_context(mux->ctx_codec_video, mux->param_video)) < 0) {
 		ERR_EXIT("'%s' failed: %s", "avcodec_parameters_to_context", av_err2str(ret));
 	}
-	
+
 	//mux->ctx_codec_video->framerate = av_guess_frame_rate(mux->ctx_format, mux->stream_video, NULL);
-	
+	//mux->ctx_format->flags |= AVFMT_FLAG_GENPTS;
+	mux->codec_video->pix_fmts = AV_PIX_FMT_YUV420P;
 	if ((ret = avcodec_open2(mux->ctx_codec_video, mux->codec_video, NULL)) < 0) {
 		ERR_EXIT("'%s' failed: %s", "avcodec_open2", av_err2str(ret));
 	}
-	
+
 	INFO("%s" , "dump input format");
 	av_dump_format(mux->ctx_format, 0, name, 0);
 
@@ -64,7 +64,6 @@ mux_inp_new (const char* name)
 }
 
 void
-mux_inp_free (muxer_t* mux)
-{
+mux_inp_free (muxer_t * mux) {
 
 }

@@ -5,8 +5,7 @@
 #include "log.h"
 
 muxer_t*
-mux_out_new (const char* name, const char *format, int video_codec_id, muxer_t *mux_inp)
-{
+mux_out_new (const char* name, const char *format, int video_codec_id, muxer_t *mux_inp) {
 	muxer_t *mux = NULL;
 	int ret = 0;
 
@@ -25,11 +24,11 @@ mux_out_new (const char* name, const char *format, int video_codec_id, muxer_t *
 	for (int i = 0; i < mux_inp->ctx_format->nb_streams; i++) {
 		//Create output AVStream according to input AVStream
 		AVStream
-			*in_stream  = NULL,
-			*out_stream = NULL;
+				*in_stream  = NULL,
+				*out_stream = NULL;
 
 		in_stream  = mux_inp->ctx_format->streams[i];
-		if(in_stream->codecpar->codec_type != AVMEDIA_TYPE_VIDEO) {
+		if (in_stream->codecpar->codec_type != AVMEDIA_TYPE_VIDEO) {
 			if ( (out_stream = avformat_new_stream(mux->ctx_format, NULL)) == NULL) {
 				ERR_EXIT("%s", "Could not create output stream");
 			}
@@ -52,14 +51,14 @@ mux_out_new (const char* name, const char *format, int video_codec_id, muxer_t *
 			}
 
 			INFO("%d -- %d", mux->ctx_codec_video->codec_id, mux->ctx_codec_video->codec_id);
-			
+			mux->ctx_format->flags |= AVFMT_FLAG_GENPTS;
 			mux->ctx_codec_video->bit_rate     = mux_inp->ctx_codec_video->bit_rate;
 			mux->ctx_codec_video->width        = mux_inp->ctx_codec_video->width;
 			mux->ctx_codec_video->height       = mux_inp->ctx_codec_video->height;
 			mux->ctx_codec_video->time_base.num    =  1; //mux_inp->ctx_codec_video->time_base.num;
 			mux->ctx_codec_video->time_base.den    = 25; //mux_inp->ctx_codec_video->time_base.den;
-			mux->ctx_codec_video->framerate.num    = 25; //mux_inp->ctx_codec_video->framerate.num;
-			mux->ctx_codec_video->framerate.den    = 1; //mux_inp->ctx_codec_video->framerate.den;
+			mux->ctx_codec_video->framerate.num    = mux_inp->ctx_codec_video->framerate.num;
+			mux->ctx_codec_video->framerate.den    = mux_inp->ctx_codec_video->framerate.den;
 			mux->ctx_codec_video->gop_size     = mux_inp->ctx_codec_video->gop_size;
 			mux->ctx_codec_video->max_b_frames = mux_inp->ctx_codec_video->max_b_frames;
 			mux->ctx_codec_video->pix_fmt      = mux_inp->ctx_codec_video->pix_fmt;
@@ -68,7 +67,7 @@ mux_out_new (const char* name, const char *format, int video_codec_id, muxer_t *
 			if ((ret = av_opt_set(mux->ctx_codec_video->priv_data, "preset", "fast", 0)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "av_opt_set", av_err2str(ret));
 			}
-
+			mux->codec_video->pix_fmts = AV_PIX_FMT_YUV420P;
 			/// Open output codec
 			if ((ret = avcodec_open2(mux->ctx_codec_video, mux->codec_video, NULL)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "avcodec_open2", av_err2str(ret));
@@ -103,7 +102,6 @@ mux_out_new (const char* name, const char *format, int video_codec_id, muxer_t *
 }
 
 void
-mux_out_free (muxer_t* mux)
-{
+mux_out_free (muxer_t* mux) {
 
 }

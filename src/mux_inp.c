@@ -3,16 +3,17 @@
 #include "log.h"
 
 muxer_t*
-mux_inp_new (const char* name) {
+mux_inp_new (const char* name)
+{
 	muxer_t *mux = NULL;
 	int	ret = 0;
 
-	if ((mux = (muxer_t*)av_mallocz(sizeof *mux)) == NULL) {
+	if ((mux = (muxer_t*) av_mallocz(sizeof *mux)) == NULL) {
 		ERR_EXIT("'%s' failed", "av_mallocz");
 	}
 
 	if ((ret = avformat_open_input(&mux->ctx_format, name, NULL, NULL)) != 0) {
-		ERR_EXIT("'%s' failed", "avformat_open_input");
+		ERR_EXIT("'%s' failed: %s", "avformat_open_input", av_err2str(ret));
 	}
 
 	if (mux->ctx_format == NULL) {
@@ -20,7 +21,7 @@ mux_inp_new (const char* name) {
 	}
 
 	if ((ret = avformat_find_stream_info(mux->ctx_format, 0)) < 0) {
-		ERR_EXIT("'%s' failed", "avformat_find_stream_info");
+		ERR_EXIT("'%s' failed: %s", "avformat_find_stream_info", av_err2str(ret));
 	}
 
 	if ((mux->index_video = av_find_best_stream(mux->ctx_format, AVMEDIA_TYPE_VIDEO, -1, -1, &mux->codec_video, 0)) == -1) {
@@ -45,15 +46,16 @@ mux_inp_new (const char* name) {
 		ERR_EXIT("'%s' failed", "avcodec_alloc_context3");
 	}
 
-	if ((ret = avcodec_parameters_to_context(mux->ctx_codec_video, mux->stream_video->codecpar)) < 0) {
-		ERR_EXIT("'%s' failed", "avcodec_parameters_to_context");
+	if ((ret = avcodec_parameters_to_context(mux->ctx_codec_video, mux->param_video)) < 0) {
+		ERR_EXIT("'%s' failed: %s", "avcodec_parameters_to_context", av_err2str(ret));
 	}
-
+	
+	//mux->ctx_codec_video->framerate = av_guess_frame_rate(mux->ctx_format, mux->stream_video, NULL);
+	
 	if ((ret = avcodec_open2(mux->ctx_codec_video, mux->codec_video, NULL)) < 0) {
-		ERR_EXIT("'%s' failed", "avcodec_open2");
+		ERR_EXIT("'%s' failed: %s", "avcodec_open2", av_err2str(ret));
 	}
-
-
+	
 	INFO("%s" , "dump input format");
 	av_dump_format(mux->ctx_format, 0, name, 0);
 
@@ -62,6 +64,7 @@ mux_inp_new (const char* name) {
 }
 
 void
-mux_inp_free (muxer_t* mux) {
+mux_inp_free (muxer_t* mux)
+{
 
 }

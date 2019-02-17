@@ -1,0 +1,1 @@
+-i StrideTest.mp4 -f mp4 -vcodec libx264 -aspect 16:9 -pix_fmt yuv420p -b 6000k -vf "pad=1920:1080:218:0:black,yadif=0:-1:1"

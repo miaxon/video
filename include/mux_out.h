@@ -8,7 +8,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include "mux.h"
 	muxer_t *
-	mux_out_new(const char* name, const char *format, int video_codec_id, int audio_codec_id);
+	mux_out_new(const char* name, const char *format, int video_codec_id, muxer_t *mux_inp);
 
 	void
 	mux_out_free(muxer_t* mux);

@@ -7,11 +7,11 @@ inc         := ../include
 inc_flags   := -I$(inc)
 
 LINKFLAGS   := 
-LDFLAGS     := 
+LDFLAGS     := -fsanitize=address
 
-CFLAGS   += -std=gnu11 -Wall -Wpedantic  
-DBGFLAGS := $(CFLAGS) -g -DDEBUG
-CFLAGS   := $(CFLAGS) -O2 -fPIC
+CFLAGS   := -std=gnu11 -O2 -fPIC -Wall -g -Wpedantic -fsanitize=address 
+#DBGFLAGS := $(CFLAGS) -g -DDEBUG
+#CFLAGS   += $(CFLAGS) 
 
 GIT_COMMIT := $(shell git describe --abbrev=8 --dirty --always --tags)
 GIT_DATE   := $(wordlist 1,5,$(shell git --no-pager show --date=local --format="%ad" --name-only))

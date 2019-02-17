@@ -12,9 +12,9 @@
 #include "log.h"
 #include "vlt.h"
 
-#define DEFAULT_FILE    "../assets/sample.wmv"
-#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
-//#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
+#define DEFAULT_FILE    "../assets/sample.mp4"
+//#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
+#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
 
 _Noreturn static void err_usage (void);
 _Noreturn static void print_version (void);

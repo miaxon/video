@@ -4,21 +4,26 @@ include ../Makefile.inc
 
 prog := vlt
 
-LDFLAGS += -lavformat -lavcodec -lswscale -lavutil -lavfilter -lswresample -lavdevice -pthread -lm -lz -lrt -lX11 -llzma -lbz2 -lvdpau
+FFMPEG_LIBS=    libavdevice                        \
+                libavformat                        \
+                libavfilter                        \
+                libavcodec                         \
+                libswresample                      \
+                libswscale                         \
+                libavutil                          \
 
-
+#LDFLAGS += -lavformat -lavcodec -lswscale -lavutil -lavfilter -lswresample -lavdevice -pthread -lfdk-aac -lvorbis -lmp3lame -lx264 -lrt -lm -lz -lrt -lX11 -llzma -lbz2 -lvdpau
+LIB_LDFLAGS := $(shell pkg-config --libs $(FFMPEG_LIBS))
+LIB_CFLAGS := $(shell pkg-config --cflags $(FFMPEG_LIBS))
 .PHONY: all clean
-
-debug: CFLAGS := $(DBGFLAGS)
-debug: all
 
 all: $(prog)
 
 $(prog): $(obj)
-	$(CC) -o $@ $^ $(LINKFLAGS) $(LDFLAGS)
+	$(CC) -o $@ $^ $(LINKFLAGS) $(LDFLAGS) $(LIB_LDFLAGS)
 
 %.o: %.c
-	$(CC) -o $@ -c $< $(CFLAGS) $(GIT_FLAGS) $(inc_flags) -MMD
+	$(CC) -o $@ -c $< $(CFLAGS) $(GIT_FLAGS) $(inc_flags) $(LIB_CFLAGS) -MMD
 
 include $(wildcard *.d)
 

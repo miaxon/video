@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define LOG_IDENT       "vlantext"
+#define LOG_IDENT       "vlt"
 #define LOG_OPTS        LOG_PID | LOG_CONS | LOG_NOWAIT | LOG_PERROR
 #define LOG_FACILITY    LOG_LOCAL0
 

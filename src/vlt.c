@@ -1,6 +1,7 @@
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
+#include <libavfilter/avfilter.h>
+#include <libavutil/opt.h>
 #include <libavutil/mathematics.h>
 #include <libavutil/time.h>
 
@@ -12,106 +13,89 @@
 #include "mux_inp.h"
 #include "mux_out.h"
 
-static void vlt_delay (int64_t start_time, AVRational *time_base, int64_t dts);
+/*static void vlt_delay (int64_t start_time, AVRational *time_base, int64_t dts);
 
 static void
-vlt_delay (int64_t start_time, AVRational *time_base, int64_t dts) {
+vlt_delay (int64_t start_time, AVRational *time_base, int64_t dts)
+{
 	AVRational time_base_q = {1, AV_TIME_BASE};
 	int64_t pts_time = av_rescale_q(dts, *time_base, time_base_q);
 	int64_t now_time = av_gettime() - start_time;
 	if (pts_time > now_time)
 		av_usleep(pts_time - now_time);
-}
+}*/
 
 int
-vlt_start (param_t *param) {
-	int	ret =  0;
+vlt_start (param_t *param)
+{
+	int	ret =  0, frame_num = 0;
 	int64_t start_time = 0;
-	muxer_t
-			*mux_inp,
-			*mux_out;
-	AVPacket pkt;
-	AVFrame  frm;
-
-	if ( ( ret = utils_file_exists(param->file)) != 0) {
-		ERROR("%s", "Invalid file path");
-		return 1;
-	}
+	muxer_t	*mux_inp, *mux_out;
+	AVPacket *pkt = NULL;
+	AVFrame  *frm = NULL;
 
 	mux_inp = mux_inp_new(param->file);
-	mux_out = mux_out_new(param->stream, "mpegts", AV_CODEC_ID_H264, mux_inp->param_audio->codec_id);
+	mux_out = mux_out_new(param->stream, "mpegts", AV_CODEC_ID_H264, mux_inp);
 
-	/// Copy audio params
-	if ((ret = avcodec_parameters_copy(mux_out->stream_audio->codecpar, mux_inp->param_audio)) < 0) {
-		ERR_EXIT("'%s' failed", "avcodec_parameters_copy");
-	}
-	if ((ret = avcodec_parameters_to_context(mux_out->ctx_codec_audio, mux_inp->param_audio)) < 0) {
-		ERR_EXIT("'%s' failed", "avcodec_parameters_to_context");
+	// Allocate frame and packet
+	if ((pkt = av_packet_alloc()) == NULL) {
+		ERR_EXIT("%s failed", "'av_packet_alloc'");
 	}
 
-	// Prepare encoder
-	mux_out->stream_video->codec->pix_fmt   = mux_inp->stream_video->codec->pix_fmt;
-	mux_out->stream_video->codec->flags     = mux_inp->stream_video->codec->flags;
-	mux_out->stream_video->codec->width     = mux_inp->stream_video->codec->width;
-	mux_out->stream_video->codec->height    = mux_inp->stream_video->codec->height;
-	mux_out->stream_video->codec->time_base = mux_inp->stream_video->codec->time_base;
-	mux_out->stream_video->codec->gop_size  = mux_inp->stream_video->codec->gop_size;
-	mux_out->stream_video->codec->bit_rate  = mux_inp->stream_video->codec->bit_rate;
-	mux_out->stream_video->codec->sample_rate  = mux_inp->stream_video->codec->sample_rate;
-	/// Open output codec
-	if ((ret = avcodec_open2(mux_out->ctx_codec_video, mux_out->codec_video, NULL)) < 0) {
-		ERR_EXIT("'%s' failed", "avcodec_open2");
-	}
-
-
-	// Open output
-	if (!(mux_out->ctx_format->oformat->flags & AVFMT_NOFILE)) {
-		if ( (ret = avio_open(&mux_out->ctx_format->pb, param->file, AVIO_FLAG_WRITE)) < 0) {
-			ERR_EXIT("%s", "'avio_open' failed");
-		}
-	}
-
-	//Write file header
-	if ( (ret = avformat_write_header(mux_out->ctx_format, NULL)) < 0) {
-		ERR_EXIT("%s", "'avformat_write_header' failed");
+	if ((frm = av_frame_alloc()) == NULL) {
+		ERR_EXIT("%s failed", "'av_frame_alloc'");
 	}
 
 	start_time = av_gettime();
-	while ((ret = av_read_frame(mux_inp->ctx_format, &pkt)) == 0) {
+	while ((ret = av_read_frame(mux_inp->ctx_format, pkt)) == 0) {
 
-		if (pkt.stream_index != mux_inp->index_audio || pkt.stream_index != mux_inp->index_video) {
-			av_packet_unref(&pkt);
-			continue;
+		INFO("%s %d", "reading frame", pkt->stream_index);
+		AVStream *in_stream, *out_stream;
+
+		//FIX No PTS
+		if (pkt->pts == AV_NOPTS_VALUE) {
+			//Write PTS
+			in_stream = mux_inp->ctx_format->streams[mux_inp->index_video];
+			AVRational time_base1 = in_stream->time_base;
+			//Duration between 2 frames (us)
+			int64_t calc_duration = (double) AV_TIME_BASE / av_q2d(in_stream->r_frame_rate);
+			//Parameters
+			pkt->pts = (double) (frame_num * calc_duration) / (double) (av_q2d(time_base1) * AV_TIME_BASE);
+			pkt->dts = pkt->pts;
+			pkt->duration = (double) calc_duration / (double) (av_q2d(time_base1) * AV_TIME_BASE);
 		}
-
 		//Convert PTS/DTS
-		pkt.pts = av_rescale_q_rnd(
-				pkt.pts,
-				mux_inp->stream_audio->time_base,
-				mux_out->stream_audio->time_base,
-				(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+		in_stream  = mux_inp->ctx_format->streams[pkt->stream_index];
+		out_stream = mux_out->ctx_format->streams[pkt->stream_index];
+		pkt->pts = av_rescale_q_rnd(pkt->pts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+		pkt->dts = av_rescale_q_rnd(pkt->dts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+		pkt->duration = av_rescale_q(pkt->duration, in_stream->time_base, out_stream->time_base);
+		pkt->pos = -1;
 
-		pkt.dts = av_rescale_q_rnd(
-				pkt.dts,
-				mux_inp->stream_audio->time_base,
-				mux_out->stream_audio->time_base,
-				(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-
-		pkt.duration = av_rescale_q(
-				pkt.duration,
-				mux_inp->stream_audio->time_base,
-				mux_out->stream_audio->time_base);
-		pkt.pos = -1;
-
+		if (in_stream->codecpar->codec_type != AVMEDIA_TYPE_VIDEO) {
+			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, pkt)) < 0) {
+				ERR_EXIT("'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
+			}
+		}
 		// Decode/Encode video
-		if (pkt.stream_index == mux_inp->index_video) {
-			vlt_delay(start_time, &mux_inp->stream_video->time_base, pkt.dts);
+		if (in_stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+			
+
+			// Delay
+			AVRational time_base = in_stream->time_base;
+			AVRational time_base_q = {1, AV_TIME_BASE};
+			int64_t pts_time = av_rescale_q(pkt->dts, time_base, time_base_q);
+			int64_t now_time = av_gettime() - start_time;
+			if (pts_time > now_time)
+				av_usleep(pts_time - now_time);
+
 			// Decode
-			if ((ret = avcodec_send_packet(mux_inp->ctx_codec_video, &pkt)) < 0) {
-				ERR_EXIT("'%s' failed", "av_interleaved_write_frame");
+			INFO("decode video frame %d", mux_inp->ctx_codec_video->frame_number);
+			if ((ret = avcodec_send_packet(mux_inp->ctx_codec_video, pkt)) < 0) {
+				ERR_EXIT("'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
 			}
 			while (ret >= 0) {
-				ret = avcodec_receive_frame(mux_inp->ctx_codec_video, &frm);
+				ret = avcodec_receive_frame(mux_inp->ctx_codec_video, frm);
 				if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
 					break;
 				} else if (ret < 0) {
@@ -119,12 +103,17 @@ vlt_start (param_t *param) {
 				}
 
 			}
+			INFO("encode video frame %d", mux_inp->ctx_codec_video->frame_number);
+			frm->format = in_stream->codecpar->format;
+			frm->width = in_stream->codecpar->width;
+			frm->height = in_stream->codecpar->height;
 			// Encode
-			if ((ret = avcodec_send_frame(mux_out->ctx_codec_video, &frm)) < 0) {
-				ERR_EXIT("'%s' failed", "avcodec_send_frame");
+			
+			if ((ret = avcodec_send_frame(mux_out->ctx_codec_video, frm)) < 0) {
+				ERR_EXIT("'%s' failed: %s", "avcodec_send_frame", av_err2str(ret));
 			}
 			while (ret >= 0) {
-				ret = avcodec_receive_packet(mux_out->ctx_codec_video, &pkt);
+				ret = avcodec_receive_packet(mux_out->ctx_codec_video, pkt);
 				if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
 					break;
 				} else if (ret < 0) {
@@ -133,35 +122,30 @@ vlt_start (param_t *param) {
 
 			}
 
-			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, &pkt)) < 0) {
-				ERR_EXIT("'%s' failed", "av_interleaved_write_frame");
+			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, pkt)) < 0) {
+				ERR_EXIT("'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 			}
-			av_frame_unref(&frm);
-			av_packet_unref(&pkt);
-		}
-
-		// Copy audio packet without decode/encode
-		if (pkt.stream_index == mux_inp->index_audio) {
-			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, &pkt)) < 0) {
-				ERR_EXIT("'%s' failed", "av_interleaved_write_frame");
-			}
-			av_packet_unref(&pkt);
+			frame_num++;
 		}
 	}
+	av_frame_unref(frm);
+	av_packet_unref(pkt);
+	av_write_trailer(mux_out->ctx_format);
 	return ret;
 }
 
-int vlt_start1 (param_t *param) {
+int vlt_start1 (param_t *param)
+{
 	int
 	ret =  0,
-			sid = -1,
-			fid =  0;
+		sid = -1,
+		fid =  0;
 
 	int64_t start_time = 0;
 
 	AVFormatContext
-			*ifmt_ctx = NULL,
-			*ofmt_ctx = NULL;
+		*ifmt_ctx = NULL,
+		*ofmt_ctx = NULL;
 
 	AVOutputFormat *ofmt = NULL;
 	AVPacket pkt;
@@ -207,8 +191,8 @@ int vlt_start1 (param_t *param) {
 	for (int i = 0; i < ifmt_ctx->nb_streams; i++) {
 		//Create output AVStream according to input AVStream
 		AVStream
-				*in_stream  = NULL,
-				*out_stream = NULL;
+			*in_stream  = NULL,
+			*out_stream = NULL;
 
 		in_stream  = ifmt_ctx->streams[i];
 		out_stream = avformat_new_stream(ofmt_ctx, icdc);
@@ -221,9 +205,9 @@ int vlt_start1 (param_t *param) {
 			ERROR("%s", "Failed to copy context from input to output stream codec context");
 			goto cleanup;
 		}
-		out_stream->codecpar->codec_tag = 0;
-		if (ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
-			out_stream->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+		//out_stream->codecpar->codec_tag = 0;
+		//if (ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
+		//	out_stream->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
 	}
 
@@ -245,8 +229,8 @@ int vlt_start1 (param_t *param) {
 	start_time = av_gettime();
 	while (1) {
 		AVStream
-				*in_stream,
-				*out_stream;
+			*in_stream,
+			*out_stream;
 		//Get an AVPacket
 		;
 		if ( (ret = av_read_frame(ifmt_ctx, &pkt)) < 0)

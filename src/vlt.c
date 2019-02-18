@@ -48,13 +48,14 @@ vlt_start (param_t *param) {
 	start_time = av_gettime();
 	while ((ret = av_read_frame(mux_inp->ctx_format, pkt)) == 0) {
 
-		INFO("reading packet size %d from stream %d", pkt->size, pkt->stream_index);
+		log_packet(mux_inp->ctx_format, pkt);
 		AVStream *in_stream, *out_stream;
 
 		//FIX No PTS
-		if (pkt->pts == AV_NOPTS_VALUE) {
+		if (pkt->pts == AV_NOPTS_VALUE ) {
 			//Write PTS
-			in_stream = mux_inp->ctx_format->streams[mux_inp->index_video];
+			log_packet(mux_inp->ctx_format, pkt);
+			in_stream = mux_inp->ctx_format->streams[pkt->stream_index];
 			AVRational time_base1 = in_stream->time_base;
 			//Duration between 2 frames (us)
 			int64_t calc_duration = (double) AV_TIME_BASE / av_q2d(in_stream->r_frame_rate);
@@ -75,7 +76,6 @@ vlt_start (param_t *param) {
 			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, pkt)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 			}
-			INFO("Sent non video packet %d", pkt->size);
 		}
 		// Decode/Encode video
 		if (in_stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
@@ -88,8 +88,15 @@ vlt_start (param_t *param) {
 				av_usleep(pts_time - now_time);
 
 			// Decode
-
+			
 			INFO("decode video frame %d", mux_inp->ctx_codec_video->frame_number);
+			
+//			int got_frame = 0;
+//			ret = avcodec_decode_video2(mux_inp->ctx_codec_video, frm, &got_frame, pkt);
+//			if (ret < 0) {
+//				ERR_EXIT("%s", "Error while decoding frame");
+//			}
+
 			if ((ret = avcodec_send_packet(mux_inp->ctx_codec_video, pkt)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
 			}
@@ -104,22 +111,10 @@ vlt_start (param_t *param) {
 				}
 
 			}
-			INFO("'%s' %d: %s", "avcodec_receive_frame", ret, av_err2str(ret));
-			INFO(
-					"Frame %d (type=%c, size=%d bytes) pts %d key_frame %d [DTS %d] format %d",
-					mux_inp->ctx_codec_video->frame_number,
-					av_get_picture_type_char(frm->pict_type),
-					frm->pkt_size,
-					frm->pts,
-					frm->key_frame,
-					frm->coded_picture_number,
-					frm->format
-					);
-
-			INFO("encode video frame %d", mux_inp->ctx_codec_video->frame_number);
-			frm->format = in_stream->codecpar->format;
-			frm->width = in_stream->codecpar->width;
-			frm->height = in_stream->codecpar->height;
+			//frm->pts = 
+			log_frame(mux_inp->ctx_codec_video, frm);
+			if (ret < 0)
+				continue;
 			// Encode
 
 			if ((ret = avcodec_send_frame(mux_out->ctx_codec_video, frm)) < 0) {

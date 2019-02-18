@@ -61,7 +61,7 @@ mux_out_new (const char* name, const char *format, int video_codec_id, muxer_t *
 			mux->ctx_codec_video->framerate.den    = mux_inp->ctx_codec_video->framerate.den;
 			mux->ctx_codec_video->gop_size     = mux_inp->ctx_codec_video->gop_size;
 			mux->ctx_codec_video->max_b_frames = mux_inp->ctx_codec_video->max_b_frames;
-			mux->ctx_codec_video->pix_fmt      = mux_inp->ctx_codec_video->pix_fmt;
+			mux->ctx_codec_video->pix_fmt      = AV_PIX_FMT_YUV420P;//mux_inp->ctx_codec_video->pix_fmt;
 			mux->ctx_codec_video->frame_size      = mux_inp->ctx_codec_video->frame_size;
 
 			if ((ret = av_opt_set(mux->ctx_codec_video->priv_data, "preset", "fast", 0)) < 0) {

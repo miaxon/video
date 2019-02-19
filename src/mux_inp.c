@@ -13,7 +13,7 @@ void show_help_children(const AVClass *class, int flags) {
 		printf("\n");
 	}
 
-	while (child = av_opt_child_class_next(class, child))
+	while ((child = av_opt_child_class_next(class, child)))
 		show_help_children(child, flags);
 }
 
@@ -29,18 +29,18 @@ mux_inp_new (const char* name) {
 		ERR_EXIT("'%s' failed", "avformat_alloc_context");
 	}
 
-	mux->ctx_format->flags |= AVFMT_FLAG_GENPTS;
+	//mux->ctx_format->flags |= AVFMT_FLAG_GENPTS;
 
-	if ((ret = av_opt_set(mux->ctx_format, "use_wallclock_as_timestamps", "0", 0)) < 0) {
-		ERR_EXIT("'%s' failed: %s", "av_opt_set", av_err2str(ret));
-	}
+	//if ((ret = av_opt_set(mux->ctx_format, "use_wallclock_as_timestamps", "0", 0)) < 0) {
+	//	ERR_EXIT("'%s' failed: %s", "av_opt_set", av_err2str(ret));
+	//}
 
 	if ((ret = avformat_open_input(&mux->ctx_format, name, NULL, NULL)) != 0) {
 		ERR_EXIT("'%s' failed: %s", "avformat_open_input", av_err2str(ret));
 	}
 
 
-	const AVInputFormat *fmt = mux->ctx_format->iformat;
+/*	const AVInputFormat *fmt = mux->ctx_format->iformat;
 
 	if (!fmt) {
 		ERR_EXIT("Unknown format '%s'.\n", "name");
@@ -53,7 +53,7 @@ mux_inp_new (const char* name) {
 
 	if (fmt->priv_class)
 		show_help_children(fmt->priv_class, AV_OPT_FLAG_DECODING_PARAM);
-
+*/
 	if (mux->ctx_format == NULL) {
 		ERR_EXIT("%s", "Could not create input context");
 	}

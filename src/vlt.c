@@ -4,6 +4,9 @@
 #include <libavutil/opt.h>
 #include <libavutil/mathematics.h>
 #include <libavutil/time.h>
+#include <libavutil/timestamp.h>
+#include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
 
 #include "log.h"
 #include "err.h"
@@ -26,33 +29,57 @@ vlt_delay (int64_t start_time, AVRational *time_base, int64_t dts)
 }*/
 
 int
-vlt_start (param_t *param) {
-	int	ret =  0, frame_num = 0;
+vlt_start (param_t *param)
+{
+	av_log_set_level(AV_LOG_DEBUG);
+
+	int	ret =  0, frame_num = 0, outSize;
+	uint8_t * out[4] = { 0 };
+    int outLinesize[4] = { 0 };
 	int64_t start_time = 0;
 	muxer_t	*mux_inp, *mux_out;
 	AVPacket *pkt = NULL;
 	AVFrame  *frm = NULL;
 
+	struct SwsContext * sws = NULL;
+	
 	mux_inp = mux_inp_new(param->file);
+	
+	// allocate sws context
+    sws = sws_getContext(mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, mux_inp->stream_video->codecpar->format, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, AV_PIX_FMT_YUV420P, SWS_POINT, NULL, NULL, NULL);
+    if (!sws) { ERR_EXIT("%s failed", "'sws_getContext'"); }
+	
+	
 	mux_out = mux_out_new(param->stream, "mpegts", AV_CODEC_ID_H264, mux_inp);
 
 	// Allocate frame and packet
 	if ((pkt = av_packet_alloc()) == NULL) {
 		ERR_EXIT("%s failed", "'av_packet_alloc'");
 	}
-
+	av_init_packet(pkt);
 	if ((frm = av_frame_alloc()) == NULL) {
 		ERR_EXIT("%s failed", "'av_frame_alloc'");
 	}
 
+	
+	// alloc data for output frame
+    ret = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, 1);
+    if (ret < 0) ERR_EXIT("IMG:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
+    outSize = ret;
+    out[0] = (uint8_t*)av_malloc((size_t)outSize);
+    if(!out[0]) {ERR_EXIT("IMG:'%s' failed", "av_malloc"); }
+    ret = av_image_fill_arrays(out, outLinesize, out[0], AV_PIX_FMT_YUV420P, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, 1);
+    if (ret < 0) ERR_EXIT("IMG:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
+	
 	start_time = av_gettime();
-	while ((ret = av_read_frame(mux_inp->ctx_format, pkt)) == 0) {
 
-		log_packet(mux_inp->ctx_format, pkt);
+	while ((ret = av_read_frame(mux_inp->ctx_format, pkt)) >= 0) {
+
+		//log_packet(mux_inp->ctx_format, pkt);
 		AVStream *in_stream, *out_stream;
-
+		int dts = pkt->dts;
 		//FIX No PTS
-		if (pkt->pts == AV_NOPTS_VALUE ) {
+		if (pkt->pts == AV_NOPTS_VALUE) {
 			//Write PTS
 			log_packet(mux_inp->ctx_format, pkt);
 			in_stream = mux_inp->ctx_format->streams[pkt->stream_index];
@@ -64,19 +91,22 @@ vlt_start (param_t *param) {
 			pkt->dts = pkt->pts;
 			pkt->duration = (double) calc_duration / (double) (av_q2d(time_base1) * AV_TIME_BASE);
 		}
-		//Convert PTS/DTS
+
 		in_stream  = mux_inp->ctx_format->streams[pkt->stream_index];
 		out_stream = mux_out->ctx_format->streams[pkt->stream_index];
-		pkt->pts = av_rescale_q_rnd(pkt->pts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-		pkt->dts = av_rescale_q_rnd(pkt->dts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-		pkt->duration = av_rescale_q(pkt->duration, in_stream->time_base, out_stream->time_base);
-		pkt->pos = -1;
 
-		if (in_stream->codecpar->codec_type != AVMEDIA_TYPE_VIDEO) {
+
+		if (in_stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+			pkt->pts = av_rescale_q_rnd(pkt->pts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+			pkt->dts = av_rescale_q_rnd(pkt->dts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+			pkt->duration = av_rescale_q(pkt->duration, in_stream->time_base, out_stream->time_base);
+			pkt->pos = -1;
 			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, pkt)) < 0) {
-				ERR_EXIT("'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
+				ERR_EXIT("AUDIO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 			}
 		}
+
+
 		// Decode/Encode video
 		if (in_stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
 			// Delay
@@ -84,86 +114,123 @@ vlt_start (param_t *param) {
 			AVRational time_base_q = {1, AV_TIME_BASE};
 			int64_t pts_time = av_rescale_q(pkt->dts, time_base, time_base_q);
 			int64_t now_time = av_gettime() - start_time;
-			if (pts_time > now_time)
+			if (pts_time > now_time) {
+				//INFO("Delaying %s", av_ts2str(pts_time - now_time));
 				av_usleep(pts_time - now_time);
+			}
 
-			// Decode
 			
-			INFO("decode video frame %d", mux_inp->ctx_codec_video->frame_number);
-			
-//			int got_frame = 0;
-//			ret = avcodec_decode_video2(mux_inp->ctx_codec_video, frm, &got_frame, pkt);
-//			if (ret < 0) {
-//				ERR_EXIT("%s", "Error while decoding frame");
-//			}
+			log_packet(mux_inp->ctx_format, pkt);
+
+			//av_frame_free(&frm);
+			//if ((frm = av_frame_alloc()) == NULL) {
+			//	ERR_EXIT("%s failed", "'av_frame_alloc'");
+			//}
+
+			//			int got_frame = 0;
+			//			ret = avcodec_decode_video2(mux_inp->ctx_codec_video, frm, &got_frame, pkt);
+			//			if (ret < 0) {
+			//				ERR_EXIT("%s", "Error while decoding frame");
+			//			}
+			//
+			//			log_frame(mux_inp->ctx_codec_video, frm);
+			//			if(got_frame == 0) {
+			//				INFO("'%s' [%d]: %s", "Frame decode failed", ret, av_err2str(ret));
+			//				continue;
+			//			}
 
 			if ((ret = avcodec_send_packet(mux_inp->ctx_codec_video, pkt)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
 			}
-			INFO("'%s' %d: %s", "avcodec_send_packet", ret, av_err2str(ret));
+			INFO("'%s' [%d]: %s", "avcodec_send_packet", ret, av_err2str(ret));
 
-			while (ret >= 0) {
-				ret = avcodec_receive_frame(mux_inp->ctx_codec_video, frm);
-				if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+			while (1) {
+				if((ret = avcodec_receive_frame(mux_inp->ctx_codec_video, frm)) >= 0) {
+					log_frame(mux_inp->ctx_codec_video, frm);
+					//sws_scale(sws, frm->data, frm->linesize, 0, mux_inp->ctx_codec_video->height, out, outLinesize);
+					//av_frame_free(&frm);
+					//frm = av_frame_alloc();
+					//avpicture_fill((AVPicture *)frm, out, AV_PIX_FMT_YUV420P, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height);
 					break;
-				} else if (ret < 0) {
-					ERR_EXIT("Error while receiving a frame from the decoder: %s", av_err2str(ret));
 				}
-
 			}
-			//frm->pts = 
-			log_frame(mux_inp->ctx_codec_video, frm);
-			if (ret < 0)
-				continue;
-			// Encode
+			//if (ret < 0) {
+			//	INFO("'%s' [%d]: %s", "decode frame", ret, av_err2str(ret));
+			//	continue;
+			//}
+			//av_packet_unref(pkt);
+			//av_init_packet(pkt);
+			//frm->pts = frame_num++;
+			//			// Encode
 
 			if ((ret = avcodec_send_frame(mux_out->ctx_codec_video, frm)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "avcodec_send_frame", av_err2str(ret));
 			}
+			INFO("'%s' [%d]: %s", "avcodec_send_frame", ret, av_err2str(ret));
 			while (ret >= 0) {
-				ret = avcodec_receive_packet(mux_out->ctx_codec_video, pkt);
-				if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+				if((ret = avcodec_receive_packet(mux_out->ctx_codec_video, pkt)) >= 0) {
+					pkt->dts = dts;
+					log_packet(mux_out->ctx_format, pkt);
 					break;
-				} else if (ret < 0) {
-					ERR_EXIT("Error while receiving a packet from the encoder: %s", av_err2str(ret));
-				}
-
+				} else
+					INFO("'%s' [%d]: %s", "avcodec_receive_packet", ret, av_err2str(ret));
 			}
 
+			//			int got_packet = 0;
+			//			ret = avcodec_encode_video2(mux_out->ctx_codec_video, pkt, frm, &got_packet);
+			
+			if (ret < 0 || pkt->dts <= 0) {
+				ERROR("%s", "Error while encoding frame");
+				//log_packet(mux_out->ctx_format, pkt);
+				continue;
+			}
+			//			if(got_packet == 0) {
+			//				INFO("'%s' [%d]: %s", "Frame encode failed", ret, av_err2str(ret));
+			//				continue;
+			//			}
+			//log_packet(mux_out->ctx_format, pkt);
 			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, pkt)) < 0) {
-				ERR_EXIT("'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
+				ERR_EXIT("VIDEO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 			}
+			av_packet_unref(pkt);
+
+			av_frame_unref(frm);
 			frame_num++;
 		}
 	}
-	av_frame_unref(frm);
-	av_packet_unref(pkt);
 	av_write_trailer(mux_out->ctx_format);
+	av_frame_unref(frm);
+	av_frame_free(&frm);
+	av_packet_unref(pkt);
+
 	return ret;
 }
 
-int vlt_start1 (param_t *param) {
+int vlt_start1 (param_t *param)
+{
 	int
 	ret =  0,
-			sid = -1,
-			fid =  0;
+		sid = -1,
+		fid =  0;
 
 	int64_t start_time = 0;
 
 	AVFormatContext
-			*ifmt_ctx = NULL,
-			*ofmt_ctx = NULL;
+		*ifmt_ctx = NULL,
+		*ofmt_ctx = NULL;
 
 	AVOutputFormat *ofmt = NULL;
 	AVPacket pkt;
 	AVCodec *icdc = NULL;
+	AVDictionary *opts = NULL;
 
 	if ( ( ret = utils_file_exists(param->file)) != 0) {
 		ERROR("%s", "Invalid file path");
 		return 1;
 	}
 
-	if ( (ret = avformat_open_input(&ifmt_ctx, param->file, NULL, NULL)) != 0) {
+	av_dict_set(&opts, "loop", "3", 0);
+	if ( (ret = avformat_open_input(&ifmt_ctx, param->file, NULL, &opts)) != 0) {
 		ERROR("%s [%d]", "'avformat_open_input' failed", ret);
 		return 1;
 	}
@@ -198,8 +265,8 @@ int vlt_start1 (param_t *param) {
 	for (int i = 0; i < ifmt_ctx->nb_streams; i++) {
 		//Create output AVStream according to input AVStream
 		AVStream
-				*in_stream  = NULL,
-				*out_stream = NULL;
+			*in_stream  = NULL,
+			*out_stream = NULL;
 
 		in_stream  = ifmt_ctx->streams[i];
 		out_stream = avformat_new_stream(ofmt_ctx, icdc);
@@ -236,8 +303,8 @@ int vlt_start1 (param_t *param) {
 	start_time = av_gettime();
 	while (1) {
 		AVStream
-				*in_stream,
-				*out_stream;
+			*in_stream,
+			*out_stream;
 		//Get an AVPacket
 		;
 		if ( (ret = av_read_frame(ifmt_ctx, &pkt)) < 0)
@@ -260,8 +327,10 @@ int vlt_start1 (param_t *param) {
 			AVRational time_base_q = {1, AV_TIME_BASE};
 			int64_t pts_time = av_rescale_q(pkt.dts, time_base, time_base_q);
 			int64_t now_time = av_gettime() - start_time;
-			if (pts_time > now_time)
+			if (pts_time > now_time) {
+				//INFO("Delaying %s", av_ts2str(pts_time - now_time));
 				av_usleep(pts_time - now_time);
+			}
 
 		}
 

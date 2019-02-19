@@ -21,6 +21,7 @@ extern "C" {
 		AVCodecParameters *param_audio;
 		int                index_video;
 		int                index_audio;
+		int64_t            last_dts;
 	} muxer_t;
 
 

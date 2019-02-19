@@ -5,8 +5,7 @@
 #include "log.h"
 
 muxer_t*
-mux_out_new (const char* name, const char *format, enum AVCodecID video_codec_id, muxer_t *mux_inp)
-{
+mux_out_new (const char* name, const char *format, enum AVCodecID video_codec_id, muxer_t *mux_inp) {
 	muxer_t *mux = NULL;
 	int ret = 0;
 
@@ -22,15 +21,16 @@ mux_out_new (const char* name, const char *format, enum AVCodecID video_codec_id
 	if (mux->ctx_format == NULL) {
 		ERR_EXIT("%s", "Could not create output context");
 	}
-
+	int n = 0;
 	for (int i = 0; i < mux_inp->ctx_format->nb_streams; i++) {
 		//Create output AVStream according to input AVStream
 		AVStream
-			*in_stream  = NULL,
-			*out_stream = NULL;
+				*in_stream  = NULL,
+				*out_stream = NULL;
 
 		in_stream  = mux_inp->ctx_format->streams[i];
 		if (in_stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+			mux->index_audio = n++;
 			if ( (out_stream = avformat_new_stream(mux->ctx_format, NULL)) == NULL) {
 				ERR_EXIT("%s", "Could not create output stream");
 			}
@@ -41,6 +41,7 @@ mux_out_new (const char* name, const char *format, enum AVCodecID video_codec_id
 
 		}
 		if (in_stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+			mux->index_video = n++;
 			if ((mux->codec_video = avcodec_find_encoder(video_codec_id)) == NULL) {
 				ERR_EXIT("%s", "'avcodec_find_encoder' failed");
 			}
@@ -52,16 +53,22 @@ mux_out_new (const char* name, const char *format, enum AVCodecID video_codec_id
 			if ( (out_stream = avformat_new_stream(mux->ctx_format, mux->codec_video)) == NULL) {
 				ERR_EXIT("%s", "Could not create output stream");
 			}
-
+			//out_stream->sample_aspect_ratio = (AVRational){24, 1};
+			out_stream->r_frame_rate = (AVRational){24, 1};
+			out_stream->time_base = (AVRational){1, 600};
+			out_stream->codec->time_base = (AVRational){1, 600};
+			out_stream->avg_frame_rate = (AVRational){24, 1};
+			out_stream->disposition = AV_DISPOSITION_DEFAULT;
 			if ((ret = avcodec_parameters_to_context(mux->ctx_codec_video, out_stream->codecpar)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "avcodec_parameters_to_context", av_err2str(ret));
 			}
+			mux->ctx_codec_video->thread_count = 4;
 			mux->ctx_codec_video->bit_rate     = 512 << 10; //mux_inp->ctx_codec_video->bit_rate;
 			mux->ctx_codec_video->width        = mux_inp->ctx_codec_video->width;
 			mux->ctx_codec_video->height       = mux_inp->ctx_codec_video->height;
 			mux->ctx_codec_video->time_base = (AVRational){1, 600}; //    =  1; //mux_inp->ctx_codec_video->time_base.num;
 			//mux->ctx_codec_video->time_base.den    = 25; //mux_inp->ctx_codec_video->time_base.den;
-			mux->ctx_codec_video->framerate = (AVRational){24, 1}; //.num    = mux_inp->ctx_codec_video->framerate.num;
+			//mux->ctx_codec_video->framerate = (AVRational){24, 1}; //.num    = mux_inp->ctx_codec_video->framerate.num;
 			//mux->ctx_codec_video->framerate.den    = mux_inp->ctx_codec_video->framerate.den;
 			mux->ctx_codec_video->gop_size     = 25; //mux_inp->ctx_codec_video->gop_size;
 			mux->ctx_codec_video->max_b_frames = 0; //mux_inp->ctx_codec_video->max_b_frames;
@@ -72,6 +79,7 @@ mux_out_new (const char* name, const char *format, enum AVCodecID video_codec_id
 			mux->ctx_codec_video->qmax = 2;
 			mux->ctx_codec_video->qmin = 32;
 			mux->ctx_codec_video->delay = 0;
+			mux->ctx_codec_video->keyint_min = 24;
 
 
 
@@ -123,10 +131,11 @@ mux_out_new (const char* name, const char *format, enum AVCodecID video_codec_id
 				ERR_EXIT("'%s' failed: %s", "av_dict_set movflags", av_err2str(ret));
 			}
 			//default brand is "isom", which fails on some devices
-			;
+
 			if ((ret = av_dict_set(&fmt_opts, "brand", "mp42", 0)) < 0) {
 				ERR_EXIT("'%s' failed: %s", "av_dict_set brand", av_err2str(ret));
 			}
+
 
 			//Write file header
 			if ( (ret = avformat_write_header(mux->ctx_format, &fmt_opts)) < 0) {
@@ -147,7 +156,6 @@ mux_out_new (const char* name, const char *format, enum AVCodecID video_codec_id
 }
 
 void
-mux_out_free (muxer_t* mux)
-{
+mux_out_free (muxer_t* mux) {
 
 }

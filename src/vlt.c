@@ -29,30 +29,32 @@ vlt_delay (int64_t start_time, AVRational *time_base, int64_t dts)
 }*/
 
 int
-vlt_start (param_t *param)
-{
+vlt_start (param_t *param) {
 	av_log_set_level(AV_LOG_DEBUG);
 
-	int	ret =  0, frame_num = 0, outSize;
-	uint8_t * out[4] = { 0 };
-    int outLinesize[4] = { 0 };
+	int	ret =  0, n = 0;
+	//uint8_t * out[4] = { 0 };
+	//int outLinesize[4] = { 0 };
+	//int outSize;
 	int64_t start_time = 0;
 	muxer_t	*mux_inp, *mux_out;
 	AVPacket *pkt = NULL;
 	AVFrame  *frm = NULL;
 
-	struct SwsContext * sws = NULL;
-	
+	//struct SwsContext * sws = NULL;
+
 	mux_inp = mux_inp_new(param->file);
-	
+
 	// allocate sws context
-    sws = sws_getContext(mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, mux_inp->stream_video->codecpar->format, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, AV_PIX_FMT_YUV420P, SWS_POINT, NULL, NULL, NULL);
-    if (!sws) { ERR_EXIT("%s failed", "'sws_getContext'"); }
-	
-	
+	//sws = sws_getContext(mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, mux_inp->stream_video->codecpar->format, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, AV_PIX_FMT_YUV420P, SWS_POINT, NULL, NULL, NULL);
+	//if (!sws) {
+	//	ERR_EXIT("%s failed", "'sws_getContext'");
+	//}
+
+
 	mux_out = mux_out_new(param->stream, "mpegts", AV_CODEC_ID_H264, mux_inp);
 
-	// Allocate frame and packet
+	// Allocate frame and packetpkt->stream_index
 	if ((pkt = av_packet_alloc()) == NULL) {
 		ERR_EXIT("%s failed", "'av_packet_alloc'");
 	}
@@ -61,49 +63,52 @@ vlt_start (param_t *param)
 		ERR_EXIT("%s failed", "'av_frame_alloc'");
 	}
 
-	
 	// alloc data for output frame
-    ret = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, 1);
-    if (ret < 0) ERR_EXIT("IMG:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
-    outSize = ret;
-    out[0] = (uint8_t*)av_malloc((size_t)outSize);
-    if(!out[0]) {ERR_EXIT("IMG:'%s' failed", "av_malloc"); }
-    ret = av_image_fill_arrays(out, outLinesize, out[0], AV_PIX_FMT_YUV420P, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, 1);
-    if (ret < 0) ERR_EXIT("IMG:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
-	
-	start_time = av_gettime();
+	//	ret = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, 1);
+	//	if (ret < 0) ERR_EXIT("IMG:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
+	//	outSize = ret;
+	//	out[0] = (uint8_t*)av_malloc((size_t)outSize);
+	//	if (!out[0]) {
+	//		ERR_EXIT("IMG:'%s' failed", "av_malloc");
+	//	}
+	//	ret = av_image_fill_arrays(out, outLinesize, out[0], AV_PIX_FMT_YUV420P, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height, 1);
+	//	if (ret < 0) ERR_EXIT("IMG:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
+	//
+	//	start_time = av_gettime();
 
 	while ((ret = av_read_frame(mux_inp->ctx_format, pkt)) >= 0) {
 
 		//log_packet(mux_inp->ctx_format, pkt);
 		AVStream *in_stream, *out_stream;
-		int dts = pkt->dts;
+		//int dts = pkt->dts;
 		//FIX No PTS
 		if (pkt->pts == AV_NOPTS_VALUE) {
 			//Write PTS
 			log_packet(mux_inp->ctx_format, pkt);
-			in_stream = mux_inp->ctx_format->streams[pkt->stream_index];
+			in_stream = mux_inp->ctx_format->streams[mux_inp->index_video];
 			AVRational time_base1 = in_stream->time_base;
 			//Duration between 2 frames (us)
 			int64_t calc_duration = (double) AV_TIME_BASE / av_q2d(in_stream->r_frame_rate);
 			//Parameters
-			pkt->pts = (double) (frame_num * calc_duration) / (double) (av_q2d(time_base1) * AV_TIME_BASE);
+			pkt->pts = (double) (n * calc_duration) / (double) (av_q2d(time_base1) * AV_TIME_BASE);
 			pkt->dts = pkt->pts;
 			pkt->duration = (double) calc_duration / (double) (av_q2d(time_base1) * AV_TIME_BASE);
 		}
 
 		in_stream  = mux_inp->ctx_format->streams[pkt->stream_index];
 		out_stream = mux_out->ctx_format->streams[pkt->stream_index];
-
+		pkt->pts = av_rescale_q_rnd(pkt->pts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+		pkt->dts = av_rescale_q_rnd(pkt->dts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+		pkt->duration = av_rescale_q(pkt->duration, in_stream->time_base, out_stream->time_base);
+		pkt->pos = -1;
 
 		if (in_stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-			pkt->pts = av_rescale_q_rnd(pkt->pts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-			pkt->dts = av_rescale_q_rnd(pkt->dts, in_stream->time_base, out_stream->time_base, (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-			pkt->duration = av_rescale_q(pkt->duration, in_stream->time_base, out_stream->time_base);
-			pkt->pos = -1;
+			//continue;
 			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, pkt)) < 0) {
 				ERR_EXIT("AUDIO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 			}
+			INFO("AUDIO: %s", "send audio packet");
+			continue;
 		}
 
 
@@ -115,12 +120,12 @@ vlt_start (param_t *param)
 			int64_t pts_time = av_rescale_q(pkt->dts, time_base, time_base_q);
 			int64_t now_time = av_gettime() - start_time;
 			if (pts_time > now_time) {
-				//INFO("Delaying %s", av_ts2str(pts_time - now_time));
+				INFO("VIDEO: delaying %s", av_ts2str(pts_time - now_time));
 				av_usleep(pts_time - now_time);
 			}
 
-			
-			log_packet(mux_inp->ctx_format, pkt);
+
+
 
 			//av_frame_free(&frm);
 			//if ((frm = av_frame_alloc()) == NULL) {
@@ -138,86 +143,105 @@ vlt_start (param_t *param)
 			//				INFO("'%s' [%d]: %s", "Frame decode failed", ret, av_err2str(ret));
 			//				continue;
 			//			}
+			//sws_scale(sws, frm->data, frm->linesize, 0, mux_inp->ctx_codec_video->height, out, outLinesize);
+			//av_frame_free(&frm);
+			//frm = av_frame_alloc();
+			//avpicture_fill((AVPicture *)frm, out, AV_PIX_FMT_YUV420P, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height);
+			//break;
+			//}
+			INFO("VIDEO: next %d", n);
+			while ((ret = avcodec_send_packet(mux_inp->ctx_codec_video, pkt)) >= 0) {
+				log_packet(mux_inp->ctx_format, pkt);
+				while ((ret = avcodec_receive_frame(mux_inp->ctx_codec_video, frm)) >= 0) {
+					log_frame(frm);
+					frm->pts = ++n;
+					while ((ret = avcodec_send_frame(mux_out->ctx_codec_video, frm)) >= 0) {
 
-			if ((ret = avcodec_send_packet(mux_inp->ctx_codec_video, pkt)) < 0) {
-				ERR_EXIT("'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
-			}
-			INFO("'%s' [%d]: %s", "avcodec_send_packet", ret, av_err2str(ret));
+						AVPacket *_pkt;
+						if ((_pkt = av_packet_alloc()) == NULL) {
+							ERR_EXIT("%s failed", "'av_packet_alloc'");
+						}
+						av_init_packet(_pkt);
+						_pkt->data = NULL; // packet data will be allocated by the encoder
+						_pkt->size = 0;
+						printf("Alloc new packet\n");
+						while ((ret = avcodec_receive_packet(mux_out->ctx_codec_video, _pkt)) >= 0) {
+							printf("Receive new packet\n");
+							_pkt->dts = n + 41796;
+							_pkt->pts =  ++n + 41796;
+							_pkt->duration = pkt->duration;
+							_pkt->pos = -1;
+							if (frm->key_frame)
+								_pkt->flags |= AV_PKT_FLAG_KEY;
 
-			while (1) {
-				if((ret = avcodec_receive_frame(mux_inp->ctx_codec_video, frm)) >= 0) {
-					log_frame(mux_inp->ctx_codec_video, frm);
-					//sws_scale(sws, frm->data, frm->linesize, 0, mux_inp->ctx_codec_video->height, out, outLinesize);
-					//av_frame_free(&frm);
-					//frm = av_frame_alloc();
-					//avpicture_fill((AVPicture *)frm, out, AV_PIX_FMT_YUV420P, mux_inp->ctx_codec_video->width, mux_inp->ctx_codec_video->height);
-					break;
+							printf("Send new packet\n");
+							log_packet(mux_out->ctx_format, _pkt);
+							// Write the compressed frame to the media file.
+							if ((ret = av_interleaved_write_frame(mux_out->ctx_format, _pkt)) < 0) {
+								ERROR("VIDEO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
+								av_packet_free(_pkt);
+								break;
+							}
+							av_packet_free(_pkt);
+							INFO("VIDEO: Sent %d", n);
+						}
+					}
 				}
 			}
-			//if (ret < 0) {
-			//	INFO("'%s' [%d]: %s", "decode frame", ret, av_err2str(ret));
-			//	continue;
-			//}
-			//av_packet_unref(pkt);
-			//av_init_packet(pkt);
-			//frm->pts = frame_num++;
-			//			// Encode
-
-			if ((ret = avcodec_send_frame(mux_out->ctx_codec_video, frm)) < 0) {
-				ERR_EXIT("'%s' failed: %s", "avcodec_send_frame", av_err2str(ret));
-			}
-			INFO("'%s' [%d]: %s", "avcodec_send_frame", ret, av_err2str(ret));
-			while (ret >= 0) {
-				if((ret = avcodec_receive_packet(mux_out->ctx_codec_video, pkt)) >= 0) {
-					pkt->dts = dts;
-					log_packet(mux_out->ctx_format, pkt);
-					break;
-				} else
-					INFO("'%s' [%d]: %s", "avcodec_receive_packet", ret, av_err2str(ret));
-			}
-
-			//			int got_packet = 0;
-			//			ret = avcodec_encode_video2(mux_out->ctx_codec_video, pkt, frm, &got_packet);
-			
-			if (ret < 0 || pkt->dts <= 0) {
-				ERROR("%s", "Error while encoding frame");
-				//log_packet(mux_out->ctx_format, pkt);
-				continue;
-			}
-			//			if(got_packet == 0) {
-			//				INFO("'%s' [%d]: %s", "Frame encode failed", ret, av_err2str(ret));
-			//				continue;
-			//			}
-			//log_packet(mux_out->ctx_format, pkt);
-			if ((ret = av_interleaved_write_frame(mux_out->ctx_format, pkt)) < 0) {
-				ERR_EXIT("VIDEO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
-			}
-			av_packet_unref(pkt);
-
-			av_frame_unref(frm);
-			frame_num++;
+			INFO("VIDEO: [%d] %s", ret, av_err2str(ret));
 		}
 	}
-	av_write_trailer(mux_out->ctx_format);
-	av_frame_unref(frm);
-	av_frame_free(&frm);
-	av_packet_unref(pkt);
+
+	//if (ret < 0) {
+	//	INFO("'%s' [%d]: %s", "decode frame", ret, av_err2str(ret));
+	//	continue;
+	//}
+	//av_packet_unref(pkt);
+	//av_init_packet(pkt);
+	//frm->pts = frame_num++;
+	//			// Encode
+
+
+
+	//			int got_packet = 0;
+	//			ret = avcodec_encode_video2(mux_out->ctx_codec_video, pkt, frm, &got_packet);
+
+	//			if (ret < 0 || pkt->dts <= 0) {
+	//				ERROR("%s", "Error while encoding frame");
+	//				//log_packet(mux_out->ctx_format, pkt);
+	//				continue;
+	//			}
+	//			if(got_packet == 0) {
+	//				INFO("'%s' [%d]: %s", "Frame encode failed", ret, av_err2str(ret));
+	//				continue;
+	//			}
+	//log_packet(mux_out->ctx_format, pkt);
+
+	av_packet_unref (pkt);
+
+	av_frame_unref (frm);
+	//frame_num++;
+
+
+	av_write_trailer (mux_out->ctx_format);
+	//av_frame_unref (frm);
+	av_frame_free (&frm);
+	//av_packet_unref (pkt);
 
 	return ret;
 }
 
-int vlt_start1 (param_t *param)
-{
+int vlt_start1 (param_t *param) {
 	int
 	ret =  0,
-		sid = -1,
-		fid =  0;
+			sid = -1,
+			fid =  0;
 
 	int64_t start_time = 0;
 
 	AVFormatContext
-		*ifmt_ctx = NULL,
-		*ofmt_ctx = NULL;
+			*ifmt_ctx = NULL,
+			*ofmt_ctx = NULL;
 
 	AVOutputFormat *ofmt = NULL;
 	AVPacket pkt;
@@ -265,8 +289,8 @@ int vlt_start1 (param_t *param)
 	for (int i = 0; i < ifmt_ctx->nb_streams; i++) {
 		//Create output AVStream according to input AVStream
 		AVStream
-			*in_stream  = NULL,
-			*out_stream = NULL;
+				*in_stream  = NULL,
+				*out_stream = NULL;
 
 		in_stream  = ifmt_ctx->streams[i];
 		out_stream = avformat_new_stream(ofmt_ctx, icdc);
@@ -303,8 +327,8 @@ int vlt_start1 (param_t *param)
 	start_time = av_gettime();
 	while (1) {
 		AVStream
-			*in_stream,
-			*out_stream;
+				*in_stream,
+				*out_stream;
 		//Get an AVPacket
 		;
 		if ( (ret = av_read_frame(ifmt_ctx, &pkt)) < 0)

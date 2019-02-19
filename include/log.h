@@ -33,7 +33,7 @@ extern "C" {
 	log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt);
 
 	void
-	log_frame(const AVCodecContext *codec_ctx, const AVFrame *frm);
+	log_frame(const AVFrame *frm);
 	
 #ifdef __cplusplus
 }

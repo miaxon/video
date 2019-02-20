@@ -14,8 +14,9 @@
 
 //#define DEFAULT_FILE    "/mnt/WDC/CINEMA/er/ER_s01/ER.01x01.-.24.hours.rus.avi"
 #define DEFAULT_FILE    "../assets/sample.mp4"
-#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
+//#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
 //#define DEFAULT_STREAM   "udp://127.0.0.1:1234?pkt_size=1316"
+#define DEFAULT_STREAM   "udp://224.1.1.1:1234?pkt_size=1316"
 //#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
 
 _Noreturn static void err_usage (void);

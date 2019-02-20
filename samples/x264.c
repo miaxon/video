@@ -81,8 +81,8 @@ static AVStream *add_stream (AVFormatContext *oc, AVCodec **codec, enum AVCodecI
 			c->codec_id = codec_id;
 			c->bit_rate = 150 * 1000;
 			/* Resolution must be a multiple of two. */
-			c->width = 640;
-			c->height = 360;
+			c->width = 512;
+			c->height = 384;
 			/* timebase: This is the fundamental unit of time (in seconds) in terms
 			 * of which frame timestamps are represented. For fixed-fps content,
 			 * timebase should be 1/framerate and timestamp increments should be
@@ -134,7 +134,7 @@ int main (int argc, char *argv[]) {
 	avcodec_register_all();
 
 	// Open video file
-	if (avformat_open_input(&pFormatCtx, "sample.mp4", NULL, NULL) != 0)
+	if (avformat_open_input(&pFormatCtx, "/mnt/WDC/CINEMA/er/ER_s01/ER.01x01.-.24.hours.rus.avi", NULL, NULL) != 0)
 		return -1; // Couldn't open file
 
 	// Retrieve stream information
@@ -142,7 +142,7 @@ int main (int argc, char *argv[]) {
 		return -1; // Couldn't find stream information
 
 	// Dump information about file onto standard error
-	av_dump_format(pFormatCtx, 0, "input_file.mp4", 0);
+	av_dump_format(pFormatCtx, 0, "/mnt/WDC/CINEMA/er/ER_s01/ER.01x01.-.24.hours.rus.avi", 0);
 
 	// Find the first video stream
 	videoStream = -1;
@@ -229,7 +229,6 @@ int main (int argc, char *argv[]) {
 			int64_t pts_time = av_rescale_q(packet.dts, time_base, time_base_q);
 			int64_t now_time = av_gettime() - start_time;
 			if (pts_time > now_time) {
-				//INFO("Delaying %s", av_ts2str(pts_time - now_time));
 				av_usleep(pts_time - now_time);
 			}
 
@@ -237,9 +236,9 @@ int main (int argc, char *argv[]) {
 			// Decode video frame
 			ret = avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
 			if (ret < 0) {
-					fprintf(stderr, "Error decoding video packet: %s\n", av_err2str(ret));
-					exit(1);
-				}
+				fprintf(stderr, "Error decoding video packet: %s\n", av_err2str(ret));
+				exit(1);
+			}
 			// Did we get a video frame?
 			if (frameFinished) {
 				printf("decode SUCCESS\n");

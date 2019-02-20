@@ -22,7 +22,6 @@ extern "C" {
 		int width;
 		int height;
 		int pix_fmt;
-		AVFrame           *frame;
 	} muxer_t;
 
 	muxer_t *

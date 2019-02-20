@@ -9,12 +9,11 @@
 #define OUTPUT_PIXFMT    AV_PIX_FMT_YUV420P
 #define OUTPUT_ENCODER    AV_CODEC_ID_H264
 #define OUTPUT_BITRATE    150 * 1000
-#define OUTPUT_FRAMERATE  24
+#define OUTPUT_FRAMERATE  30
 #define OUTPUT_GOPSIZE    12
 
-
 muxer_t *
-muxer_new(const char* name, int width, int height) {
+muxer_new (const char* name, int width, int height) {
 	muxer_t *mux = NULL;
 	int ret = 0;
 
@@ -56,6 +55,7 @@ muxer_new(const char* name, int width, int height) {
 	mux->height = height;
 	mux->pix_fmt = OUTPUT_PIXFMT;
 
+	//mux->ctx_cv->thread_count = 4;
 	mux->ctx_cv->bit_rate   = OUTPUT_BITRATE;
 	mux->ctx_cv->width      = width;
 	mux->ctx_cv->height     = height;
@@ -79,19 +79,10 @@ muxer_new(const char* name, int width, int height) {
 
 	av_dump_format(mux->ctx_f, 0, name, 1);
 
-	if ((mux->frame = av_frame_alloc()) == NULL) {
-		ERR_EXIT("'%s' failed", "av_frame_alloc");
-	}
-
-	if ((ret = av_image_alloc(mux->frame->data, mux->frame->linesize, mux->width, mux->height, OUTPUT_PIXFMT, 0)) < 0) {
-		ERR_EXIT("'%s' failed: %s", "av_image_alloc", av_err2str(ret));
-	}
-
 	return mux;
 }
 
-
 void
-muxer_free(muxer_t* mux) {
+muxer_free (muxer_t* mux) {
 
 }

@@ -7,7 +7,9 @@ void
 log_error (const char *format, ...) {
 	va_list args;
 	va_start(args, format);
-	vsyslog(LOG_ERR, format, args);
+	char buf[1024] = {0};
+	snprintf(buf, 1024, "[ERROR] %s\n", format);
+	vprintf(buf, args);
 	va_end(args);
 }
 
@@ -15,21 +17,10 @@ void
 log_info (const char *format, ...) {
 	va_list args;
 	va_start(args, format);
-	vsyslog(LOG_INFO, format, args);
+	char buf[1024] = {0};
+	snprintf(buf, 1024, "[INFO] %s\n", format);
+	vprintf(buf, args);
 	va_end(args);
-}
-
-void
-log_start (int options, int facility) {
-	openlog(LOG_IDENT, options, facility);
-	syslog(LOG_INFO, "start (build %s %s)", COMMIT, DATE);
-
-}
-
-void
-log_stop (void) {
-	syslog(LOG_INFO, "finish");
-	closelog();
 }
 
 void

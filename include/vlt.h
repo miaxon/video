@@ -9,6 +9,12 @@ extern "C" {
     typedef struct {
         const char *file;
         const char *stream;
+		const char *title;
+		const char *url;
+		int        port;
+		int        loop;
+		
+		
     } param_t;
 
     int

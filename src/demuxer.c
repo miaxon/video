@@ -4,7 +4,7 @@
 #include "utils.h"
 
 demuxer_t *
-demuxer_new(const char* name) {
+demuxer_new (const char* name) {
 	demuxer_t * mux;
 	int	ret = 0;
 
@@ -50,15 +50,17 @@ demuxer_new(const char* name) {
 	if ((ret = avcodec_open2(mux->ctx_cv, mux->cv, NULL)) < 0) {
 		ERR_EXIT("'%s' failed: %s", "avcodec_open2", av_err2str(ret));
 	}
-	
+
 	mux->width = mux->ctx_cv->width;
 	mux->height = mux->ctx_cv->height;
-	
+
 	INFO("%s" , "dump input format");
 	av_dump_format(mux->ctx_f, 0, name, 0);
 	return mux;
 }
 
 void
-demuxer_free(demuxer_t* mux) {
+demuxer_free (demuxer_t* mux) {
+	avcodec_close(mux->ctx_cv);
+	avformat_close_input(&mux->ctx_f);
 }

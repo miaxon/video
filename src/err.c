@@ -11,24 +11,26 @@
 
 #include "err.h"
 #include "log.h"
+#define BUFSIZE 1024
 
-_Noreturn void 
-err_exit(const char *format, ...) {
+_Noreturn void
+err_exit (const char *format, ...) {
 	va_list args;
 	va_start(args, format);
-	vsyslog(LOG_ERR, format, args);
+	char buf[BUFSIZE] = {0};
+	snprintf(buf, BUFSIZE - 1, "[EXIT] %s\n", format);
+	vprintf(buf, args);
 	va_end(args);
-	log_stop();
 	exit(EXIT_FAILURE);
 }
 
-_Noreturn void 
-err_sys(const char *format, ...) {
+_Noreturn void
+err_sys (const char *format, ...) {
 	va_list args;
 	va_start(args, format);
-	vsyslog(LOG_ERR, format, args);
-	syslog(LOG_ERR, "[Errno %d] %s", errno, strerror(errno));
+	char buf[BUFSIZE] = {0};
+	snprintf(buf, BUFSIZE - 1, "[SYS Errno %d] %s\n", errno, format);
+	vprintf(buf, args);
 	va_end(args);
-	log_stop();
 	exit(EXIT_FAILURE);
 }

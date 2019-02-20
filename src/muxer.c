@@ -21,13 +21,7 @@ muxer_new (const char* name, int width, int height) {
 		ERR_EXIT("'%s' failed", "av_mallocz");
 	}
 
-	AVOutputFormat * ofmt = NULL;
-
-	if ((ofmt = av_guess_format(OUTPUT_FORMAT, NULL, NULL)) == NULL) {
-		ERR_EXIT("'%s' failed", "av_guess_format");
-	}
-
-	if ((ret = avformat_alloc_output_context2(&mux->ctx_f, ofmt, NULL, name)) < 0) {
+	if ((ret = avformat_alloc_output_context2(&mux->ctx_f, NULL, OUTPUT_FORMAT, name)) < 0) {
 		ERR_EXIT("'%s' failed: %s", "avformat_alloc_output_context2", av_err2str(ret));
 	}
 
@@ -51,15 +45,14 @@ muxer_new (const char* name, int width, int height) {
 		ERR_EXIT("'%s' failed: %s", "avcodec_parameters_to_context", av_err2str(ret));
 	}
 
-	mux->width = width;
-	mux->height = height;
+	mux->width   = width;
+	mux->height  = height;
 	mux->pix_fmt = OUTPUT_PIXFMT;
 
-	//mux->ctx_cv->thread_count = 4;
 	mux->ctx_cv->bit_rate   = OUTPUT_BITRATE;
 	mux->ctx_cv->width      = width;
 	mux->ctx_cv->height     = height;
-	mux->ctx_cv->time_base  = (AVRational){OUTPUT_FRAMERATE, 1};
+	mux->ctx_cv->time_base  = (AVRational){1, OUTPUT_FRAMERATE};
 	mux->ctx_cv->gop_size   = OUTPUT_GOPSIZE;
 	mux->ctx_cv->pix_fmt    = OUTPUT_PIXFMT;
 
@@ -84,5 +77,7 @@ muxer_new (const char* name, int width, int height) {
 
 void
 muxer_free (muxer_t* mux) {
-
+	avcodec_close(mux->ctx_cv);
+	avio_close(mux->ctx_f->pb);
+	av_free(mux->ctx_f);
 }

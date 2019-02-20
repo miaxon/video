@@ -48,6 +48,7 @@ vlt_start (param_t *param) {
 	inp = demuxer_new(param->file);
 	out = muxer_new(param->stream, inp->width, inp->height);
 
+loop:
 	start_time = av_gettime();
 	while (av_read_frame(inp->ctx_f, &packet) >= 0) {
 
@@ -106,7 +107,6 @@ vlt_start (param_t *param) {
 				while ((ret = avcodec_receive_packet(out->ctx_cv, &tpacket)) >= 0) {
 					INFO("VIDEO: %s", "Encode SUCCESS");
 					//log_packet(out->ctx_f, &tpacket);
-
 					if (out->ctx_cv->coded_frame->key_frame)
 						tpacket.flags |= AV_PKT_FLAG_KEY;
 
@@ -133,7 +133,15 @@ vlt_start (param_t *param) {
 			}
 		}
 	}
+	INFO("VIDEO:'%s' reading end: %s", "avcodec_read_frame", av_err2str(ret));
 	av_write_trailer(out->ctx_f);
+
+	//avio_seek(inp->ctx_f->pb, 0, SEEK_SET);
+	//	avformat_seek_file(inp->ctx_f, inp->siv, 0, 0, inp->sv->duration, 0);
+	//goto loop;
+	av_free(frame);
+	demuxer_free(inp);
+	muxer_free(out);
 	return ret;
 }
 

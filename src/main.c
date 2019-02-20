@@ -19,11 +19,16 @@
 #define DEFAULT_STREAM   "udp://224.1.1.1:1234?pkt_size=1316"
 //#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
 
-_Noreturn static void err_usage (void);
+#define DEFAULT_PORT     4535
+#define DEFAULT_URL      "/subtitle"
+#define DEFAULT_LOOP     0
+
+_Noreturn static void print_usage (void);
 _Noreturn static void print_version (void);
 
 static void check_param (param_t *param);
 /// Application entry point
+static int parse_int (const char *str);
 
 /**
  * Main function that parse command line params and then start
@@ -33,15 +38,22 @@ main (int argc, char **argv) {
 
 	param_t param = {
 		.file   = NULL,
-		.stream = NULL
+		.stream = NULL,
+		.title  = NULL,
+		.url    = DEFAULT_URL,
+		.loop   = DEFAULT_LOOP,
+		.port   = DEFAULT_PORT
 	};
 
 	int longindex, c;
-	const char *optstring = "f:l:s:vh";
+	const char *optstring = "f:s:l:p:u:t:vh";
 	const struct option longopts[] = {
 		{ "file",    required_argument, NULL, 'f'},
 		{ "stream",  required_argument, NULL, 's'},
-		{ "listen",  required_argument, NULL, 'l'},
+		{ "loop",    required_argument, NULL, 'l'},
+		{ "port",    required_argument, NULL, 'p'},
+		{ "url",     required_argument, NULL, 'u'},
+		{ "title",   required_argument, NULL, 't'},
 		{ "version", no_argument, NULL, 'v'},
 		{ "help",    no_argument, NULL, 'h'},
 		{ 0, 0, 0, 0}
@@ -50,25 +62,39 @@ main (int argc, char **argv) {
 	while ((c = getopt_long(argc, argv, optstring, longopts, &longindex)) != -1) {
 		switch (c) {
 			case 's':
-
+				param.stream = optarg;
 				break;
 			case 'f':
 				param.file = optarg;
 				break;
+			case 'u':
+				param.url = optarg;
+				break;
+			case 't':
+				param.title = optarg;
+				break;
+			case 'p':
+				param.port = parse_int(optarg);
+				break;
+			case 'l':
+				param.loop = parse_int(optarg);
+				break;
 			case 'v':
 				print_version();
 				break;
+			case 'h':
+				print_usage();
+				break;
 			default:
-				err_usage();
+				print_usage();
 		};
 	};
 
-	log_start(LOG_OPTS, LOG_FACILITY);
 
 	check_param(&param);
-	int result = vlt_start(&param);
 
-	log_stop();
+	int result = vlt_start(&param);
+	result = vlt_start(&param);
 	return !result;
 }
 
@@ -81,28 +107,58 @@ static void check_param (param_t *param) {
 	if (!param->stream) {
 		param->stream = DEFAULT_STREAM;
 	}
+
+	if (param->port < 1024 || param->port > 65535)
+		ERR_EXIT("%s", "port value must be from 1024 to 65535");
+
+	if (param->loop < 0)
+		ERR_EXIT("%s", "loop value must be positive");
+
 	INFO(
 			"\nusing params:\n"
-			"\tfile   '%s'\n"
-			"\tstream '%s'\n",
+			"\tfile   \t'%s'\n"
+			"\tstream \t'%s'\n"
+			"\tport   \t'%d'\n"
+			"\tloop   \t'%d'\n"
+			"\turl    \t'%s'\n"
+			"\ttitle  \t'%s'\n",
 			param->file,
-			param->stream
+			param->stream,
+			param->port,
+			param->loop,
+			param->url,
+			param->title
 			);
+}
+
+static int
+parse_int (const char* src) {
+	char *end;
+	const long val = strtol(src, &end, 0);
+
+	if (end == src || *end != '\0')
+		err_exit("Invalid argument");
+
+	return val;
 }
 
 /// Print usage info and exit
 
 _Noreturn static void
-err_usage (void) {
+print_usage (void) {
 	printf(
-			"Usage: vlt [slf] [OPTION]\n"
-			"\t-s, --stream\t stream on <ip>:<port>\n"
-			"\t-l, --listen\t listen port\n"
-			"\t-f, --file\t video file for streaming\n"
+			"Usage: vlt [slputfvh] [OPTION]\n"
+			"\t-s, --stream\t stream on udp://<ip>:<port> (default '"DEFAULT_STREAM"')\n"
+			"\t-l, --loop\t looping stream, 0 - infinitely looping (default 0)\n"
+			"\t-p, --port\t http port to listen (default '4535')\n"
+			"\t-u, --url\t url to listen(default '"DEFAULT_URL"'\n"
+			"\t-t, --title\t initial title (default empty)\n"
+			"\t-f, --file\t video file for streaming( default '"DEFAULT_FILE"')\n"
 			"\t-v, --version\t print version and exit\n"
-			"\t-h, --help\t print this help and exit\n"
+			"\t-h, --help\t print this help and exit\n\n"
+			"\texample: vlt -p 1333 -u /settext -s udp://224.1.1.3:1234 -f /home/user/my_video.mp4\n\n"
 			);
-	err_exit("exit");
+	exit(1);
 }
 
 /// Debug info

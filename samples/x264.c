@@ -47,7 +47,7 @@ static void open_video (AVFormatContext *oc, AVCodec *codec, AVStream *st) {
 		}
 	}
 	/* copy data and linesize picture pointers to frame */
-	*((AVPicture *) frame) = dst_picture;
+	//*((AVPicture *) frame) = dst_picture;
 }
 
 static void close_video (AVFormatContext *oc, AVStream *st) {
@@ -73,7 +73,7 @@ static AVStream *add_stream (AVFormatContext *oc, AVCodec **codec, enum AVCodecI
 		fprintf(stderr, "Could not allocate stream\n");
 		exit(1);
 	}
-	st->id = oc->nb_streams - 1;
+	//st->id = oc->nb_streams - 1;
 	c = st->codec;
 	switch ((*codec)->type) {
 		case AVMEDIA_TYPE_VIDEO:
@@ -81,8 +81,8 @@ static AVStream *add_stream (AVFormatContext *oc, AVCodec **codec, enum AVCodecI
 			c->codec_id = codec_id;
 			c->bit_rate = 150 * 1000;
 			/* Resolution must be a multiple of two. */
-			c->width = 1280;
-			c->height = 720;
+			c->width = 640;
+			c->height = 360;
 			/* timebase: This is the fundamental unit of time (in seconds) in terms
 			 * of which frame timestamps are represented. For fixed-fps content,
 			 * timebase should be 1/framerate and timestamp increments should be
@@ -134,7 +134,7 @@ int main (int argc, char *argv[]) {
 	avcodec_register_all();
 
 	// Open video file
-	if (avformat_open_input(&pFormatCtx, "input_file.mp4", NULL, NULL) != 0)
+	if (avformat_open_input(&pFormatCtx, "sample.mp4", NULL, NULL) != 0)
 		return -1; // Couldn't open file
 
 	// Retrieve stream information
@@ -171,8 +171,9 @@ int main (int argc, char *argv[]) {
 	pFrame = av_frame_alloc();
 
 	// setup mux
-	filename = "output_file.flv";
-	fmt = av_guess_format("flv", filename, NULL);
+	//filename = "output_file.flv";
+	filename = "udp://224.1.1.1:1234?pkt_size=1316";
+	fmt = av_guess_format("mpegts", NULL, NULL);
 	if (fmt == NULL) {
 		printf("Could not guess format.\n");
 		return -1;
@@ -218,15 +219,30 @@ int main (int argc, char *argv[]) {
 
 	// Read frames, decode, and re-encode
 	frame_count = 1;
+	int64_t start_time = av_gettime();
 	while (av_read_frame(pFormatCtx, &packet) >= 0) {
 		// Is this a packet from the video stream?
 		if (packet.stream_index == videoStream) {
-			// Decode video frame
-			avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
 
+			AVRational time_base = pFormatCtx->streams[videoStream]->time_base;
+			AVRational time_base_q = {1, AV_TIME_BASE};
+			int64_t pts_time = av_rescale_q(packet.dts, time_base, time_base_q);
+			int64_t now_time = av_gettime() - start_time;
+			if (pts_time > now_time) {
+				//INFO("Delaying %s", av_ts2str(pts_time - now_time));
+				av_usleep(pts_time - now_time);
+			}
+
+
+			// Decode video frame
+			ret = avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
+			if (ret < 0) {
+					fprintf(stderr, "Error decoding video packet: %s\n", av_err2str(ret));
+					exit(1);
+				}
 			// Did we get a video frame?
 			if (frameFinished) {
-
+				printf("decode SUCCESS\n");
 				// Initialize a new frame
 				AVFrame* newFrame = av_frame_alloc();
 
@@ -267,6 +283,7 @@ int main (int argc, char *argv[]) {
 					// Write the compressed frame to the media file.
 					ret = av_interleaved_write_frame(oc, &pkt);
 				} else {
+					printf("encode FAILED\n");
 					ret = 0;
 				}
 				if (ret != 0) {

@@ -16,6 +16,7 @@ extern "C" {
 
 #define INFO(format, ...) log_info("%s:%d | " format, __FILE__, __LINE__, __VA_ARGS__)
 #define ERROR(format, ...) log_error("%s:%d | " format, __FILE__, __LINE__, __VA_ARGS__)
+#define OK printf("%s:%d | ======== OK =========\n", __FILE__, __LINE__);
 
 	void
 	log_error(const char *format, ...);

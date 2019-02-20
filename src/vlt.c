@@ -48,7 +48,6 @@ vlt_start (param_t *param) {
 	inp = demuxer_new(param->file);
 	out = muxer_new(param->stream, inp->width, inp->height);
 
-loop:
 	start_time = av_gettime();
 	while (av_read_frame(inp->ctx_f, &packet) >= 0) {
 

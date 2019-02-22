@@ -47,6 +47,7 @@ mux_out_new (const char* name, const char *format, enum AVCodecID video_codec_id
 
 			if ( (mux->stream_video = avformat_new_stream(mux->ctx_format, mux->codec_video)) == NULL) {
 				ERR_EXIT("%s", "Could not create output stream");
+				&opts
 			}
 
 			mux->ctx_codec_video = mux->stream_video->codec;

@@ -10,15 +10,20 @@ extern "C" {
 #include <libavformat/avformat.h>	
 
 	typedef struct {
-		AVFormatContext   *ctx_f;
-		AVCodecContext    *ctx_cv;
-		AVCodecContext    *ctx_ca;
-		AVCodec           *cv;
-		AVCodec           *ca;
-		AVStream          *sv;
-		AVStream          *sa;
-		AVCodecParameters *pv;
-		AVCodecParameters *pa;
+		AVFormatContext   *ctx_f;  // format    format context
+		AVCodecContext    *ctx_cv; // video     codec  context
+		AVCodecContext    *ctx_ca; // audio
+		AVCodecContext    *ctx_cs; // subtitle
+		AVCodec           *cv;     // video     codec
+		AVCodec           *ca;     // audio
+		AVCodec           *cs;     // subtitle
+		AVStream          *sv;     // video     stream
+		AVStream          *sa;     // audio
+		AVStream          *ss;     // subtitle
+		AVCodecParameters *pv;     // video     codec params
+		AVCodecParameters *pa;     // audio
+		AVCodecParameters *ps;     // subtitle
+		
 		int width;
 		int height;
 		int pix_fmt;

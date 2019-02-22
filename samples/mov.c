@@ -139,7 +139,7 @@ codec_id) {
 			c->subtitle_header = (uint8_t*)av_asprintf(header_format,
 					!(c->flags & AV_CODEC_FLAG_BITEXACT) ? AV_STRINGIFY(LIBAVCODEC_VERSION) : "",
 					GV_ASS_DEFAULT_PLAYRESX, GV_ASS_DEFAULT_PLAYRESY,
-					"ARIALUNI", 53, GV_ASS_DEFAULT_COLOR, GV_ASS_DEFAULT_COLOR, GV_ASS_DEFAULT_BACK_COLOR, GV_ASS_DEFAULT_BACK_COLOR,
+					"ARIAL", 53, GV_ASS_DEFAULT_COLOR, GV_ASS_DEFAULT_COLOR, GV_ASS_DEFAULT_BACK_COLOR, GV_ASS_DEFAULT_BACK_COLOR,
 					-GV_ASS_DEFAULT_BOLD, -GV_ASS_DEFAULT_ITALIC, -GV_ASS_DEFAULT_UNDERLINE, 1, GV_ASS_DEFAULT_ALIGNMENT);
 			printf("%s\n", c->subtitle_header);
 			printf("======================== ass: %p\n", c->priv_data);
@@ -254,7 +254,8 @@ int main (int argc, char *argv[]) {
 	pFrame = av_frame_alloc();
 	// setup mux
 	//filename = "output_file.flv";
-	filename = "udp://10.0.224.26:1234";
+	//filename = "udp://10.0.224.26:1234";
+	filename = "udp://127.0.0.1:1234";
 	fmt = av_guess_format("mpegts", NULL, NULL);
 	if (fmt == NULL) {
 		printf("Could not guess format.\n");
@@ -373,9 +374,9 @@ int main (int argc, char *argv[]) {
 					uint64_t bufferSize = 1024 * 1024;
 					int spkt_size = 0;
 					uint8_t* data = (uint8_t*) av_mallocz(bufferSize);
-					if ( (spkt_size = avcodec_encode_subtitle(text_st->codec, data, bufferSize, &sub )) < 0) {
-						printf("subtitle %s\n", av_err2str(spkt_size));
-					}
+					//if ( (spkt_size = avcodec_encode_subtitle(text_st->codec, data, bufferSize, &sub )) < 0) {
+					//	printf("subtitle %s\n", av_err2str(spkt_size));
+					//}
 
 					AVPacket spkt;
 					av_init_packet(&spkt);

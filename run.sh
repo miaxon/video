@@ -9,4 +9,4 @@ fi
 #make clean
 #make
 cp -f $PROG $BIN
-cd $BIN && ./vlt
+cd $BIN && ./vlt 

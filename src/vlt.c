@@ -19,11 +19,13 @@
 
 
 
-static void vlt_subtitle (muxer_t *mux);
+static void vlt_subtitle (muxer_t *mux, int frame_num);
 
 int
 vlt_start (param_t *param) {
-	//av_log_set_level(AV_LOG_DEBUG);
+
+	if (param->debug)
+		av_log_set_level(AV_LOG_DEBUG);
 
 	int	ret =  0, frame_count = 1;
 	int64_t start_time = 0;
@@ -45,7 +47,7 @@ vlt_start (param_t *param) {
 	start_time = av_gettime();
 	while (av_read_frame(inp->ctx_f, &packet) >= 0) {
 
-		//vlt_subtitle(out);
+
 		if (packet.stream_index == inp->siv) {
 
 			AVRational time_base = inp->ctx_f->streams[inp->siv]->time_base;
@@ -57,7 +59,7 @@ vlt_start (param_t *param) {
 				av_usleep(pts_time - now_time);
 			}
 
-			INFO("VIDEO: next %d (%d)", frame_count, out->ctx_cv->frame_number);
+			INFO("VIDEO: next %d (%d) (%d)", frame_count, out->ctx_cv->frame_number, out->ctx_cs->frame_number);
 
 			if ((ret = avcodec_send_packet(inp->ctx_cv, &packet)) < 0) {
 				ERR_EXIT("VIDEO:'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
@@ -87,7 +89,7 @@ vlt_start (param_t *param) {
 
 				av_image_copy(tframe->data, tframe->linesize, (const uint8_t**)frame->data, frame->linesize, out->pix_fmt, out->width, out->height);
 
-				tframe->pts    = frame_count++;
+				tframe->pts    = frame_count;
 				tframe->format = out->pix_fmt;
 				tframe->width  = out->width;
 				tframe->height = out->height;
@@ -119,7 +121,10 @@ vlt_start (param_t *param) {
 						ERR_EXIT("VIDEO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 					}
 
+					vlt_subtitle(out, frame_count);
+
 				}
+				frame_count++;
 				if (ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
 					ERR_EXIT("VIDEO:'%s' failed: %s", "avcodec_receive_frame", av_err2str(ret));
 				}
@@ -144,13 +149,11 @@ vlt_start (param_t *param) {
 }
 
 static void
-vlt_subtitle (muxer_t *mux) {
-	static int n = 0;
+vlt_subtitle (muxer_t *mux, int frame_num) {
 	int buf_max_size = 1024 * 1024, buf_size = 0, ret = 0;
 	AVPacket packet;
 	uint8_t* buf;
 	AVSubtitle sub;
-
 	ass_add_rect(&sub, "I am {\b1}StackOverflow[\b0} amused.");
 
 	//	uint64_t startTime = sub.pts / 1000; // FIXME: need better solution...
@@ -168,9 +171,9 @@ vlt_subtitle (muxer_t *mux) {
 	//			"I am {\b1}StackOverflow[\b0} amused.");
 
 
-	sub.pts = ++n;
+	sub.pts = frame_num;
 	sub.start_display_time = 0;
-	sub.end_display_time = 10;
+	//sub.end_display_time = 10;
 
 	if ((buf = av_mallocz(buf_max_size)) == NULL) {
 		ERR_EXIT("'%s' failed", "av_mallocz");

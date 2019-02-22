@@ -42,11 +42,12 @@ main (int argc, char **argv) {
 		.title  = NULL,
 		.url    = DEFAULT_URL,
 		.loop   = DEFAULT_LOOP,
-		.port   = DEFAULT_PORT
+		.port   = DEFAULT_PORT,
+		.debug  = 0
 	};
 
 	int longindex, c;
-	const char *optstring = "f:s:l:p:u:t:vh";
+	const char *optstring = "f:s:l:p:u:t:dvh";
 	const struct option longopts[] = {
 		{ "file",    required_argument, NULL, 'f'},
 		{ "stream",  required_argument, NULL, 's'},
@@ -54,6 +55,7 @@ main (int argc, char **argv) {
 		{ "port",    required_argument, NULL, 'p'},
 		{ "url",     required_argument, NULL, 'u'},
 		{ "title",   required_argument, NULL, 't'},
+		{ "debug",   no_argument, NULL, 'd'},
 		{ "version", no_argument, NULL, 'v'},
 		{ "help",    no_argument, NULL, 'h'},
 		{ 0, 0, 0, 0}
@@ -78,6 +80,9 @@ main (int argc, char **argv) {
 				break;
 			case 'l':
 				param.loop = parse_int(optarg);
+				break;
+			case 'd':
+				param.debug = 1;
 				break;
 			case 'v':
 				print_version();
@@ -114,6 +119,9 @@ static void check_param (param_t *param) {
 	if (param->loop < 0)
 		ERR_EXIT("%s", "loop value must be positive");
 
+	if (param->debug < 0)
+		ERR_EXIT("%s", "loop value must be positive");
+
 	INFO(
 			"\nusing params:\n"
 			"\tfile   \t'%s'\n"
@@ -122,12 +130,14 @@ static void check_param (param_t *param) {
 			"\tloop   \t'%d'\n"
 			"\turl    \t'%s'\n"
 			"\ttitle  \t'%s'\n",
+			"\tdebug  \t'%s'\n",
 			param->file,
 			param->stream,
 			param->port,
 			param->loop,
 			param->url,
-			param->title
+			param->title,
+			param->debug ? "Yes" : "Mo"
 			);
 }
 

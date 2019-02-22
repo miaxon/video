@@ -10,8 +10,8 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavutil/bprint.h>
 
-#define ASS_DEFAULT_PLAYRESX 384
-#define ASS_DEFAULT_PLAYRESY 288
+#define ASS_DEFAULT_PLAYRESX 100
+#define ASS_DEFAULT_PLAYRESY 100
 
 #define ASS_DEFAULT_FONT        "Arial"
 #define ASS_DEFAULT_FONT_SIZE   16

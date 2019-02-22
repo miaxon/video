@@ -13,6 +13,7 @@ extern "C" {
 		const char *url;
 		int        port;
 		int        loop;
+		int        debug;
 		
 		
     } param_t;

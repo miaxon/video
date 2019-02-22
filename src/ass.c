@@ -58,7 +58,7 @@ ass_subtitle_header (
 
 	if (!avctx->subtitle_header)
 		return AVERROR(ENOMEM);
-	avctx->subtitle_header_size = strlen((const char*)avctx->subtitle_header);
+	avctx->subtitle_header_size = strlen((const char*)avctx->subtitle_header) + 1;
 	return 0;
 }
 

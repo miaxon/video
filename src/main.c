@@ -16,8 +16,8 @@
 #define DEFAULT_FILE    "../assets/sample.mp4"
 //#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
 //#define DEFAULT_STREAM   "udp://127.0.0.1:1234?pkt_size=1316"
-#define DEFAULT_STREAM   "udp://224.1.1.1:1234?pkt_size=1316"
-//#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
+//#define DEFAULT_STREAM   "udp://224.1.1.1:1234?pkt_size=1316"
+#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
 
 #define DEFAULT_PORT     4535
 #define DEFAULT_URL      "/subtitle"
@@ -117,9 +117,6 @@ static void check_param (param_t *param) {
 		ERR_EXIT("%s", "port value must be from 1024 to 65535");
 
 	if (param->loop < 0)
-		ERR_EXIT("%s", "loop value must be positive");
-
-	if (param->debug < 0)
 		ERR_EXIT("%s", "loop value must be positive");
 
 	INFO(

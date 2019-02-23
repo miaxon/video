@@ -31,6 +31,7 @@ extern "C" {
 
 	void
 	demuxer_free(demuxer_t* mux);
+	
 
 #ifdef __cplusplus
 }

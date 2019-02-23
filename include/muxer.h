@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 #include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>	
+#include <libavformat/avformat.h> 
 
 	typedef struct {
 		AVFormatContext   *ctx_f;  // format    format context
@@ -20,10 +20,11 @@ extern "C" {
 		AVStream          *sv;     // video     stream
 		AVStream          *sa;     // audio
 		AVStream          *ss;     // subtitle
-		AVCodecParameters *pv;     // video     codec params
-		AVCodecParameters *pa;     // audio
-		AVCodecParameters *ps;     // subtitle
-		
+		AVCodecParameters *pv;	   // video     codec params
+		AVCodecParameters *pa;	   // audio
+		AVCodecParameters *ps;	   // subtitle
+		int                fc;     // frame count
+
 		int width;
 		int height;
 		int pix_fmt;
@@ -34,7 +35,12 @@ extern "C" {
 
 	void
 	muxer_free(muxer_t* mux);
+
+	int
+	muxer_encode_frame(muxer_t *mux, AVFrame *src);
 	
+	int
+	muxer_encode_subtitle(muxer_t *mux, char *text);
 	
 
 

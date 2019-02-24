@@ -1,0 +1,125 @@
+
+#define OUTPUT_SUB_TEXT_ENCODER   AV_CODEC_ID_MOV_TEXT
+
+static int sub_text_init = 0;
+typedef struct {
+		AVFormatContext   *ctx_f;  // format    format context
+		AVCodecContext    *ctx_cv; // video     codec  context
+		AVCodecContext    *ctx_ca; // audio
+		AVCodecContext    *ctx_cs; // subtitle
+                AVCodecContext    *ctx_cb; // subdvb
+		AVCodec           *cv;     // video     codec
+		AVCodec           *ca;     // audio
+		AVCodec           *cs;     // subtitle
+                AVCodec           *cb;     // subdvb
+		AVStream          *sv;     // video     stream
+		AVStream          *sa;     // audio
+		AVStream          *ss;     // subtitle
+                AVStream          *sb;     // subtitle
+		AVCodecParameters *pv;	   // video     codec params
+		AVCodecParameters *pa;	   // audio
+		AVCodecParameters *ps;	   // subtitle
+                AVCodecParameters *pb;	   // subdvb
+		int                fc;     // frame count
+
+		int width;
+		int height;
+		int pix_fmt;
+	} muxer_t;
+static void
+muxer_add_subtitle_stream(int width, int height) {
+	if (sub_text_init > 0)
+		return;
+
+	int ret = 0;
+
+	if ((mux->cs = avcodec_find_encoder(OUTPUT_SUB_TEXT_ENCODER)) == NULL) {
+		ERR_EXIT("'%s' failed", "avcodec_find_encoder");
+	}
+
+	if ((mux->ss = avformat_new_stream(mux->ctx_f, mux->cs)) == NULL) {
+		ERR_EXIT("'%s' failed", "avformat_new_stream");
+	}
+
+	mux->ss->codecpar->codec_id   = OUTPUT_SUB_TEXT_ENCODER;
+	mux->ss->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+
+	if ((mux->ctx_cs = avcodec_alloc_context3(mux->cs)) == NULL) {
+		ERR_EXIT("%s", "'avcodec_get_context_defaults3' failed");
+	}
+
+	if ((ret = avcodec_parameters_to_context(mux->ctx_cs, mux->ss->codecpar)) < 0) {
+		ERR_EXIT("'%s' failed: %s", "avcodec_parameters_to_context", av_err2str(ret));
+	}
+
+	mux->ctx_cs->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+	mux->ctx_cs->time_base  = mux->ctx_cv->time_base;
+
+	if ((ret = ass_subtitle_header(
+								mux->ctx_cs,
+								width, height,
+								ASS_DEFAULT_FONT,
+								ASS_DEFAULT_FONT_SIZE,
+								ASS_DEFAULT_COLOR,
+								ASS_DEFAULT_BACK_COLOR,
+								ASS_DEFAULT_BOLD,
+								ASS_DEFAULT_ITALIC,
+								ASS_DEFAULT_UNDERLINE,
+								ASS_DEFAULT_BORDERSTYLE,
+								ASS_DEFAULT_ALIGNMENT)) < 0) {
+		ERR_EXIT("'%s' failed: %s", "ff_ass_subtitle_header_default", av_err2str(ret));
+	}
+
+	if ((ret = avcodec_open2(mux->ctx_cs, mux->cs, NULL)) < 0) {
+		ERR_EXIT("'%s' failed: %s", "avcodec_open2", av_err2str(ret));
+	}
+
+	sub_text_init = 1;
+}
+int
+muxer_encode_subtitle(muxer_t *out, char *text) {
+
+	if (sub_text_init == 0)
+		return -1;
+
+	int buf_max_size = 1024, buf_size = 0, ret = 0;
+
+	AVPacket packet;
+	uint8_t * buf;
+	AVSubtitle sub;
+	sub.num_rects = 0;
+	sub.pts = out->fc;
+	sub.start_display_time = 0;
+	ass_add_rect(&sub, text);
+
+	if ((buf = av_mallocz(buf_max_size)) == NULL) {
+		ERR_EXIT("'%s' failed", "av_mallocz");
+	}
+
+	if ( (buf_size = avcodec_encode_subtitle(out->ctx_cs, buf, buf_max_size, &sub)) < 0) {
+		ERR_EXIT("SUBTITLE:'%s' failed: %s", "avcodec_encode_subtitle", av_err2str(buf_size));
+	}
+
+	av_init_packet(&packet);
+	packet.data = buf;
+	packet.size = buf_size;
+	packet.stream_index = out->ss->index;
+	packet.pos = -1;
+	packet.pts = out->fc;
+	packet.dts = out->fc;
+	packet.duration = 1000;
+
+	if (packet.pts != AV_NOPTS_VALUE)
+		packet.pts = av_rescale_q(packet.pts, out->ctx_cs->time_base, out->ss->time_base);
+
+	if (packet.dts != AV_NOPTS_VALUE)
+		packet.dts = av_rescale_q(packet.dts, out->ctx_cs->time_base, out->ss->time_base);
+
+	if ((ret = av_interleaved_write_frame(out->ctx_f, &packet)) < 0) {
+		ERR_EXIT("VIDEO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
+	}
+
+	av_free(buf);
+	avsubtitle_free(&sub);
+	return 0;
+}

@@ -1,7 +1,7 @@
 # Main Makefile
 #
 
-DIRS = 	src samples
+DIRS = 	src
 
 BUILD_DIRS = ${DIRS}
 

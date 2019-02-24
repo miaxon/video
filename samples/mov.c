@@ -253,9 +253,9 @@ int main (int argc, char *argv[]) {
 	// Allocate video frame
 	pFrame = av_frame_alloc();
 	// setup mux
-	//filename = "output_file.flv";
+	filename = "output_file.avi";
 	//filename = "udp://10.0.224.26:1234";
-	filename = "udp://127.0.0.1:1234";
+	//filename = "udp://127.0.0.1:1234";
 	fmt = av_guess_format("mpegts", NULL, NULL);
 	if (fmt == NULL) {
 		printf("Could not guess format.\n");

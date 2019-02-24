@@ -77,10 +77,8 @@ ass_subtitle_header_default (AVCodecContext *avctx)
 int
 ass_add_rect (AVSubtitle *sub, const char *text)
 {
-	av_assert0(sub);
 	
-	char *ass_str;
-	
+	char *ass_str;	
 	sub->num_rects = 1;
 	
 	sub->rects = (AVSubtitleRect**) av_mallocz(sizeof(*sub->rects));
@@ -90,11 +88,8 @@ ass_add_rect (AVSubtitle *sub, const char *text)
 	av_assert0(sub->rects[0]);
 	
 	sub->rects[0]->type = SUBTITLE_ASS;
-	ass_str = av_asprintf(ASS_DIALOGUE_STRING, text); //;ass_get_dialog(0, 0, NULL, NULL, text);
-	av_assert0(ass_str);
-	
+	ass_str = av_asprintf(ASS_DIALOGUE_STRING, text);
 	sub->rects[0]->ass = ass_str;
 	
-	INFO("ASS: %s", ass_str);
 	return sub->num_rects;
 }

@@ -1,3 +1,21 @@
+const AVFilter *dt  = avfilter_get_by_name("drawtext");
+	av_assert0(dt);
+	AVFilterContext *ctx_fi;
+	AVFilterGraph *fg;
+
+	fg = avfilter_graph_alloc();
+	av_assert0(fg);
+
+	char *args = "text='StackOverflow': fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf: fontcolor=white: fontsize=24: box=1: boxcolor=black@0.5: boxborderw=5: x=(w-text_w)/2: y=(h-text_h)/2";
+
+
+	if ((ret = avfilter_graph_create_filter(&ctx_fi, dt, "drawtext", args, NULL, fg)) < 0) {
+		ERR_EXIT("VIDEO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
+	}
+
+
+
+
 int
 vlt_start2 (param_t *param) {
 	av_log_set_level(AV_LOG_DEBUG);

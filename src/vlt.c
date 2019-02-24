@@ -56,7 +56,7 @@ vlt_start (param_t *param)
 				av_usleep(pts_time - now_time);
 			}
 			
-			INFO("VIDEO: next %d (%d) (%d)", out->fc, out->sv->nb_frames, out->ss->nb_frames);
+			INFO("VIDEO: inp: %d out: %d dvb: %d", out->fc, out->sv->nb_frames, out->sb->nb_frames);
 			// Decode/Ecode
 			if ((ret = avcodec_send_packet(inp->ctx_cv, &packet)) < 0) {
 				ERR_EXIT("VIDEO:'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
@@ -66,7 +66,7 @@ vlt_start (param_t *param)
 				if(muxer_encode_frame(out, frame) < 0) {
 					continue;
 				}
-				muxer_encode_subtitle(out, "I am StackOverflow amused.");
+				muxer_encode_subtitle(out, "aaa");
 
 			}
 			if (ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)

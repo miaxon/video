@@ -13,16 +13,16 @@ extern "C" {
 		AVFormatContext   *ctx_f;  // format    format context
 		AVCodecContext    *ctx_cv; // video     codec  context
 		AVCodecContext    *ctx_ca; // audio
-		AVCodecContext    *ctx_cs; // subtitle
+                AVCodecContext    *ctx_cb; // subdvb
 		AVCodec           *cv;     // video     codec
 		AVCodec           *ca;     // audio
-		AVCodec           *cs;     // subtitle
+                AVCodec           *cb;     // subdvb
 		AVStream          *sv;     // video     stream
 		AVStream          *sa;     // audio
-		AVStream          *ss;     // subtitle
+                AVStream          *sb;     // subdvb
 		AVCodecParameters *pv;	   // video     codec params
 		AVCodecParameters *pa;	   // audio
-		AVCodecParameters *ps;	   // subtitle
+                AVCodecParameters *pb;	   // subdvb
 		int                fc;     // frame count
 
 		int width;

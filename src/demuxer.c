@@ -51,8 +51,9 @@ demuxer_new (const char* name) {
 		ERR_EXIT("'%s' failed: %s", "avcodec_open2", av_err2str(ret));
 	}
 
-	mux->width = mux->ctx_cv->width;
-	mux->height = mux->ctx_cv->height;
+	mux->width   = mux->ctx_cv->width;
+	mux->height  = mux->ctx_cv->height;
+	mux->pix_fmt = mux->ctx_cv->pix_fmt;
 
 	INFO("%s" , "dump input format");
 	av_dump_format(mux->ctx_f, 0, name, 0);

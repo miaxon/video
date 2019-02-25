@@ -24,6 +24,7 @@ extern "C" {
 		int sia;
 		int width;
 		int height;
+                int pix_fmt;
 	} demuxer_t;
 
 	demuxer_t *

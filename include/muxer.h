@@ -27,20 +27,21 @@ extern "C" {
 
 		int width;
 		int height;
-		int pix_fmt;
+		int pix_fmt_inp;
+                int pix_fmt_out;
 	} muxer_t;
 
 	muxer_t *
-	muxer_new(const char* name, int width, int height);
+	muxer_new(const char* name, enum AVPixelFormat pix_fmt, int width, int height);
 
 	void
 	muxer_free(muxer_t* mux);
 
 	int
-	muxer_encode_frame(muxer_t *mux, AVFrame *src);
+	muxer_encode_frame(AVFrame *src);
 	
 	int
-	muxer_encode_subtitle(muxer_t *mux, char *text);
+	muxer_encode_subtitle(char *text);
 	
 
 

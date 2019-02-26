@@ -2,94 +2,69 @@
 #include <libavutil/avassert.h>
 #include "ass.h"
 #include "log.h"
+#include "err.h"
 
-//static char* ass_get_dialog (int readorder, int layer, const char *style, const char *speaker, const char *text);
-//static int make_tc (uint64_t ms, int *tc);
 
-int
-ass_subtitle_header (
-	AVCodecContext *avctx,
-	int playresx,
-	int playresy,
-	const char *font,
-	int font_size,
-	int color,
-	int back_color,
-	int bold,
-	int italic,
-	int underline,
-	int border_style,
-	int alignment)
-{
+static ASS_Library  *lib;
+static ASS_Renderer *rnd;
+static ASS_Image    *img;
 
-	avctx->subtitle_header = (uint8_t*) av_asprintf(
-		ASS_HEADER_STRING,
-		!(avctx->flags & AV_CODEC_FLAG_BITEXACT) ? AV_STRINGIFY(LIBAVCODEC_VERSION) : "",
-		playresx, playresy,
-		font, font_size, color, color, back_color, back_color,
-		-bold, -italic, -underline, border_style, alignment);
+void
+ass_init(int width, int height) {
+	if ((lib = ass_library_init()) == NULL) {
+		ERR_EXIT("ASS:'%s' failed", "ass_library_init");
+	}
 
-	if (!avctx->subtitle_header)
-		return AVERROR(ENOMEM);
-	avctx->subtitle_header_size = strlen((const char*) avctx->subtitle_header) + 1;
-	INFO("SUBTITLE HEADER: %s", avctx->subtitle_header);
-	return 0;
+	if ((rnd = ass_renderer_init(lib)) == NULL) {
+		ERR_EXIT("ASS:'%s' failed", "ass_render_init");
+	}
+
+	ass_set_use_margins(rnd, 0);
+
+	ass_set_font_scale(rnd, 1.0 );
+
+	ass_set_line_spacing(rnd, 0.0 );
+
+	ass_set_hinting(rnd, ASS_HINTING_NONE );
+	
+	ass_set_frame_size(rnd, width, height);
+	
+	ass_set_fonts(rnd, NULL, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
 }
 
-int
-ass_subtitle_header_default (AVCodecContext *avctx)
-{
-	return ass_subtitle_header(avctx, 
-		ASS_DEFAULT_PLAYRESX,
-		ASS_DEFAULT_PLAYRESY,
-		ASS_DEFAULT_FONT,
-		ASS_DEFAULT_FONT_SIZE,
-		ASS_DEFAULT_COLOR,
-		ASS_DEFAULT_BACK_COLOR,
-		ASS_DEFAULT_BOLD,
-		ASS_DEFAULT_ITALIC,
-		ASS_DEFAULT_UNDERLINE,
-		ASS_DEFAULT_BORDERSTYLE,
-		ASS_DEFAULT_ALIGNMENT);
-}
+ASS_Image*
+ass_get_track(const char *sub) {
 
-//static char*
-//ass_get_dialog (int marked, const char *style, const char *speaker, const char *text)
-//{
-//	return av_asprintf("0,0:00:00.00,1:00:00.00,Default,,0,0,0,,%s",
-//		marked, style ? style : "Default",
-//		speaker ? speaker : "", text);
-//}
+	char *buf  = av_asprintf(
+			ASS_TRACK_STRING,
+			AV_STRINGIFY(LIBAVCODEC_VERSION),
+			ASS_DEFAULT_PLAYRESX,
+			ASS_DEFAULT_PLAYRESY,
+			ASS_DEFAULT_FONT,
+			ASS_DEFAULT_FONT_SIZE,
+			ASS_PRIMARY_COLOR,
+			ASS_OUTLINE_COLOR,
+			ASS_SECONDARY_COLOR,
+			ASS_BACK_COLOR,
+			ASS_DEFAULT_BOLD,
+			ASS_DEFAULT_ITALIC,
+			ASS_DEFAULT_UNDERLINE,
+			ASS_DEFAULT_BORDERSTYLE,
+			ASS_DEFAULT_ALIGNMENT,
+			sub);
+	//INFO("ASSTrack: %s", buf);
+	int size = strlen((const char*) buf);
 
-//static int
-//make_tc (uint64_t ms, int *tc)
-//{
-//	static const int tc_divs[3] = { 1000, 60, 60 };
-//	int i;
-//	for (i = 0; i < 3; i++) {
-//		tc[i] = ms % tc_divs[i];
-//		ms /= tc_divs[i];
-//	}
-//	tc[3] = ms;
-//	return ms > 99;
-//}
+	ASS_Track *track = ass_read_memory(lib, buf, size, "utf-8");
+	if (!track) {
+		ERR_EXIT("ASS:'%s' failed", "ass_read_memory");
+	}
 
-int
-ass_add_rect (AVSubtitle *sub, const char *text)
-{
+	av_free(buf);
 	
-	char *ass_str;	
-	sub->num_rects = 1;
+	img = ass_render_frame(rnd, track, 0, NULL);
+	INFO("ASS img: dst_x %d, dst_y %d, stride %d, w %d, h %d", img->dst_x, img->dst_y, img->stride, img->w, img->h);
 	
-	sub->rects = (AVSubtitleRect**) av_mallocz(sizeof(*sub->rects));
-	av_assert0(sub->rects);
-	
-	sub->rects[0] = (AVSubtitleRect*) av_mallocz(sizeof(*sub->rects[0]));
-	av_assert0(sub->rects[0]);
-	
-	sub->rects[0]->type = SUBTITLE_ASS;
-	ass_str = av_asprintf(ASS_DIALOGUE_STRING, text);
-	sub->rects[0]->ass = ass_str;
-	
-	return sub->num_rects;
+	return img;
+
 }

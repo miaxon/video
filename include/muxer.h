@@ -38,11 +38,8 @@ extern "C" {
 	muxer_free(muxer_t* mux);
 
 	int
-	muxer_encode_frame(AVFrame *src);
-	
-	int
-	muxer_encode_subtitle(char *text);
-	
+	muxer_encode_frame(AVFrame *src, const char *sub);
+		
 
 
 #ifdef __cplusplus

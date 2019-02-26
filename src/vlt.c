@@ -42,8 +42,7 @@ vlt_start (param_t *param) {
 
 	start_time = av_gettime();
 	while (av_read_frame(inp->ctx_f, &packet) >= 0) {
-		if (out->fc % 100 == 0)
-			muxer_encode_subtitle("aaa");
+		
 		if (packet.stream_index == inp->siv) {
 			// Delay
 			AVRational time_base = inp->ctx_f->streams[inp->siv]->time_base;
@@ -55,16 +54,14 @@ vlt_start (param_t *param) {
 				av_usleep(pts_time - now_time);
 			}
 
-			INFO("VIDEO: inp: %d out: %d dvb: %d", out->fc, out->sv->nb_frames, out->sb->nb_frames);
+			INFO("VIDEO: inp: %d out: %d dvb: %d", out->fc, out->sv->nb_frames);
 			// Decode/Ecode
 			if ((ret = avcodec_send_packet(inp->ctx_cv, &packet)) < 0) {
 				ERR_EXIT("VIDEO:'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
 			}
 			while ((ret = avcodec_receive_frame(inp->ctx_cv, frame)) >= 0) {
 
-				if (muxer_encode_frame(frame) < 0) {
-					continue;
-				}
+				muxer_encode_frame(frame, " text text texttexttext texttexttext text");
 
 			}
 			if (ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)

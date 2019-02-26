@@ -6,7 +6,7 @@
 #include <libavutil/avassert.h>
 #include <libavutil/intreadwrite.h>
 #include <libswscale/swscale.h>
-#include "libavutil/pixfmt.h"
+#include <ass/ass.h>
 
 #include "muxer.h"
 #include "err.h"
@@ -17,6 +17,7 @@
 
 #define OUTPUT_FORMAT            "mpegts"
 #define OUTPUT_PIXFMT             AV_PIX_FMT_YUV420P
+#define OUTPUT_PIXFMT_SUB         AV_PIX_FMT_RGB24
 #define OUTPUT_VIDEO_ENCODER      AV_CODEC_ID_H264
 #define OUTPUT_SUB_BITMAP_ENCODER AV_CODEC_ID_DVB_SUBTITLE
 #define OUTPUT_H264_PROFILE       FF_PROFILE_H264_HIGH
@@ -26,19 +27,20 @@
 #define OUTPUT_FRAMERATE          25
 #define OUTPUT_GOPSIZE            15
 
-extern const uint8_t avpriv_cga_font[2048];
 
 static void muxer_add_video_stream(const char* name, int width, int height);
-static void muxer_add_subdvb_stream(int width, int height);
-static void muxer_add_out_frame(void);
+static int  muxer_add_subtitle(const char* text);
+static void muxer_img_conv_init(void);
+static int  muxer_prepare_frame(AVFrame *src);
 
 static AVDictionary *opts;
 static muxer_t *mux;
 struct SwsContext *ctx_sws;
-uint8_t * buf;
-AVFrame *dst;
-
-static int sub_dvb_init = 0;
+struct SwsContext *ctx_sws_sub;
+static uint8_t * buf;
+static uint8_t * buf_sub;
+static AVFrame *dst;
+static AVFrame *dst_sub;
 
 muxer_t *
 muxer_new (const char* name, enum AVPixelFormat pix_fmt, int width, int height) {
@@ -56,8 +58,8 @@ muxer_new (const char* name, enum AVPixelFormat pix_fmt, int width, int height) 
 	mux->pix_fmt_out = OUTPUT_PIXFMT;
 
 	muxer_add_video_stream(name, width, height);
-	muxer_add_subdvb_stream(width, height);
-	muxer_add_out_frame();
+	muxer_img_conv_init();
+	ass_init(width, height);
 
 	if ( (ret = avformat_write_header(mux->ctx_f, NULL)) < 0) {
 		ERR_EXIT("'%s' failed: %s", "avformat_write_header", av_err2str(ret));
@@ -122,42 +124,6 @@ muxer_add_video_stream(const char* name, int width, int height) {
 	}
 }
 
-static void
-muxer_add_subdvb_stream(int width, int height) {
-	if (sub_dvb_init > 0)
-		return;
-
-	int ret = 0;
-
-	if ((mux->cb = avcodec_find_encoder(OUTPUT_SUB_BITMAP_ENCODER)) == NULL) {
-		ERR_EXIT("'%s' failed", "avcodec_find_encoder");
-	}
-
-	if ((mux->sb = avformat_new_stream(mux->ctx_f, mux->cb)) == NULL) {
-		ERR_EXIT("'%s' failed", "avformat_new_stream");
-	}
-
-	mux->sb->codecpar->codec_id   = OUTPUT_SUB_BITMAP_ENCODER;
-	mux->sb->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
-
-	if ((mux->ctx_cb = avcodec_alloc_context3(mux->cb)) == NULL) {
-		ERR_EXIT("%s", "'avcodec_get_context_defaults3' failed");
-	}
-
-	if ((ret = avcodec_parameters_to_context(mux->ctx_cb, mux->sb->codecpar)) < 0) {
-		ERR_EXIT("'%s' failed: %s", "avcodec_parameters_to_context", av_err2str(ret));
-	}
-
-	mux->ctx_cb->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-	mux->ctx_cb->time_base  = mux->ctx_cv->time_base;
-
-	if ((ret = avcodec_open2(mux->ctx_cb, mux->cb, NULL)) < 0) {
-		ERR_EXIT("'%s' failed: %s", "avcodec_open2", av_err2str(ret));
-	}
-
-	sub_dvb_init = 0;
-}
-
 void
 muxer_free (muxer_t* mux) {
 	av_free(buf);
@@ -170,11 +136,17 @@ muxer_free (muxer_t* mux) {
 
 }
 
-void muxer_add_out_frame(void) {
-	int size = 0, ret = 0;
+/// image resizing/scaling
+
+void muxer_img_conv_init(void) {
+	int size = 0, size_sub = 0, ret = 0;
 
 
 	if ((dst = av_frame_alloc()) == NULL) {
+		ERR_EXIT("VIDEO:'%s' failed", "av_frame_alloc");
+	}
+
+	if ((dst_sub = av_frame_alloc()) == NULL) {
 		ERR_EXIT("VIDEO:'%s' failed", "av_frame_alloc");
 	}
 
@@ -182,7 +154,15 @@ void muxer_add_out_frame(void) {
 		ERR_EXIT("IMAGE:'%s' failed", "av_image_get_buffer_size");
 	}
 
+	if ((size_sub = av_image_get_buffer_size(OUTPUT_PIXFMT_SUB, mux->width, mux->height, 1)) < 0) {
+		ERR_EXIT("IMAGE:'%s' failed", "av_image_get_buffer_size");
+	}
+
 	if ((buf = (uint8_t*) av_mallocz(size)) == NULL) {
+		ERR_EXIT("IMAGE:'%s' failed", "av_frame_alloc");
+	}
+
+	if ((buf_sub = (uint8_t*) av_mallocz(size_sub)) == NULL) {
 		ERR_EXIT("IMAGE:'%s' failed", "av_frame_alloc");
 	}
 
@@ -190,33 +170,116 @@ void muxer_add_out_frame(void) {
 		ERR_EXIT("IMAGE:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
 	}
 
+	if ((ret = av_image_fill_arrays(dst_sub->data, dst_sub->linesize, buf_sub, OUTPUT_PIXFMT_SUB, mux->width, mux->height, 1)) < 0) {
+		ERR_EXIT("IMAGE:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
+	}
+
 	if ((ctx_sws = sws_getContext(
-								mux->width,
-								mux->height,
-								mux->pix_fmt_inp,
-								mux->width,
-								mux->height,
-								mux->pix_fmt_out,
-								SWS_BICUBIC, NULL, NULL, NULL)) == NULL) {
+			mux->width,
+			mux->height,
+			OUTPUT_PIXFMT_SUB,
+			mux->width,
+			mux->height,
+			mux->pix_fmt_out,
+			SWS_BICUBIC, NULL, NULL, NULL)) == NULL) {
+		ERR_EXIT("IMAGE:'%s' failed: %s", "sws_getContext", av_err2str(ret));
+	}
+
+	if ((ctx_sws_sub = sws_getContext(
+			mux->width,
+			mux->height,
+			mux->pix_fmt_inp,
+			mux->width,
+			mux->height,
+			OUTPUT_PIXFMT_SUB,
+			SWS_BICUBIC, NULL, NULL, NULL)) == NULL) {
 		ERR_EXIT("IMAGE:'%s' failed: %s", "sws_getContext", av_err2str(ret));
 	}
 
 }
 
-int
-muxer_encode_frame(AVFrame *src) {
+static void blend_single(AVFrame * frame, ASS_Image *img) {
+	
+#define _r(c)  ((c)>>24)
+#define _g(c)  (((c)>>16)&0xFF)
+#define _b(c)  (((c)>>8)&0xFF)
+#define _a(c)  ((c)&0xFF)
+	
+	int x, y;
+	unsigned char opacity = 255 - _a(img->color);
+	unsigned char r = _r(img->color);
+	unsigned char g = _g(img->color);
+	unsigned char b = _b(img->color);
 
-	int ret = 0, result = -1;
+	unsigned char *src;
+	unsigned char *dst;
 
-	if (( ret = sws_scale(ctx_sws, (const uint8_t * const*) src->data, src->linesize, 0, mux->height, dst->data, dst->linesize)) < 0) {
+	src = img->bitmap;
+	dst = frame->data[0] + img->dst_y * frame->linesize[0] + img->dst_x * 3;
+	for (y = 0; y < img->h; ++y) {
+		for (x = 0; x < img->w; ++x) {
+			unsigned k = ((unsigned) src[x]) * opacity / 255;
+			// possible endianness problems
+			dst[x * 3] = (k * b + (255 - k) * dst[x * 3]) / 255;
+			dst[x * 3 + 1] = (k * g + (255 - k) * dst[x * 3 + 1]) / 255;
+			dst[x * 3 + 2] = (k * r + (255 - k) * dst[x * 3 + 2]) / 255;
+		}
+		src += img->stride;
+		dst += frame->linesize[0];
+	}
+}
+
+static void blend(AVFrame *frame, ASS_Image *img) {
+	int cnt = 0;
+	while (img) {
+		blend_single(frame, img);
+		++cnt;
+		img = img->next;
+	}
+	printf("%d images blended\n", cnt);
+}
+// convert image to output format
+
+static int
+muxer_prepare_frame(AVFrame *src) {
+	int ret = 0;
+
+	if (( ret = sws_scale(ctx_sws_sub, (const uint8_t * const*) src->data, src->linesize, 0, mux->height, dst_sub->data, dst_sub->linesize)) < 0) {
 		ERR_EXIT("VIDEO:'%s' failed: %s", "sws_scale", av_err2str(ret));
 	}
+	/// now we have RGB24 frame
 
+	dst_sub->format = AV_PIX_FMT_RGB24;
+	dst_sub->width  = mux->width;
+	dst_sub->height = ret;
+
+	ASS_Image *sub = ass_get_track("A");
+	blend(dst_sub, sub);
+
+	if (( ret = sws_scale(ctx_sws, (const uint8_t * const*) dst_sub->data, dst_sub->linesize, 0, mux->height, dst->data, dst->linesize)) < 0) {
+		ERR_EXIT("VIDEO:'%s' failed: %s", "sws_scale", av_err2str(ret));
+	}
 
 	dst->pts    = mux->fc++;
 	dst->format = mux->pix_fmt_out;
 	dst->width  = mux->width;
 	dst->height = ret;
+
+	return ret;
+}
+
+int
+muxer_encode_frame(AVFrame *src, const char *sub) {
+
+	int ret = 0;
+
+	if ((ret = muxer_prepare_frame(src)) < 0) {
+		ERR_EXIT("VIDEO:'%s' failed: %s", "muxer_prepare_frame", av_err2str(ret));
+	}
+
+	if ((ret = muxer_add_subtitle(sub)) < 0) {
+		ERR_EXIT("VIDEO:'%s' failed: %s", "muxer_add_subtitle", av_err2str(ret));
+	}
 
 	if ((ret = avcodec_send_frame(mux->ctx_cv, dst)) < 0) {
 		ERR_EXIT("VIDEO:'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
@@ -235,154 +298,25 @@ muxer_encode_frame(AVFrame *src) {
 
 		if (src->key_frame)
 			packet.flags |= AV_PKT_FLAG_KEY;
-
 		packet.stream_index = mux->sv->index;
-		//packet.pos = -1;		
 		av_packet_rescale_ts(&packet, mux->ctx_cv->time_base, mux->sv->time_base);
 
 		if ((ret = av_interleaved_write_frame(mux->ctx_f, &packet)) < 0) {
 			ERR_EXIT("VIDEO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 		}
-		result = ret;
 	}
 	if (ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
 		ERR_EXIT("VIDEO:'%s' failed: %s", "avcodec_receive_frame", av_err2str(ret));
 	}
 
-
-
-	return result;
+	return ret;
 }
+
+/// render subtitle on currnet frame
 
 static int
-add_rect (AVSubtitle *sub, const char *text) {
+muxer_add_subtitle(const char *text) {
 
-	int size = 0, ret = 0, h = 100;
-	AVSubtitleRect *rect;
-	uint8_t * buf[4] = {0};
-	//int linesize[4] = {0};
-
-	sub->num_rects = 1;
-
-	if ((size = av_image_get_buffer_size(mux->pix_fmt_out, mux->width, h, 1)) < 0) {
-		ERR_EXIT("IMAGE:'%s' failed", "av_image_get_buffer_size");
-	}
-
-	if ((sub->rects = (AVSubtitleRect**) av_mallocz(sizeof(*sub->rects))) == NULL) {
-		ERR_EXIT("IMAGE:'%s' failed", "av_mallocz");
-	}
-
-	if ((rect = (AVSubtitleRect*) av_mallocz(sizeof(*sub->rects[0]))) == NULL) {
-		ERR_EXIT("IMAGE:'%s' failed", "av_mallocz");
-	}
-
-	sub->rects[0] = rect;
-
-	//	if ((sub->rects[0]->data[0] = (uint8_t *) av_mallocz(size)) == NULL) {
-	//		ERR_EXIT("IMAGE:'%s' failed", "av_mallocz");
-	//	}
-	//	
-	//	if ((sub->rects[0]->data[1] = (uint8_t *) av_mallocz(size)) == NULL) {
-	//		ERR_EXIT("IMAGE:'%s' failed", "av_mallocz");
-	//	}
-
-
-
-	//
-	if ((buf[0] = (uint8_t*) av_mallocz(size)) == NULL) {
-		ERR_EXIT("IMAGE:'%s' failed", "av_frame_alloc");
-	}
-	//
-	//	if ((buf[1] = (uint8_t*) av_mallocz(size)) == NULL) {
-	//		ERR_EXIT("IMAGE:'%s' failed", "av_frame_alloc");
-	//	}
-	//	
-	if ((ret = av_image_fill_arrays(rect->data, rect->linesize, buf[0], mux->pix_fmt_out, mux->width, h, 1)) < 0) {
-		ERR_EXIT("IMAGE:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
-	}
-
-	ptrdiff_t linesize[4] = { rect->linesize[0], 0, 0, 0 };
-
-	if ((ret = av_image_fill_black(rect->data, linesize, mux->pix_fmt_out, AVCOL_RANGE_JPEG, mux->width, h)) < 0) {
-		ERR_EXIT("IMAGE:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
-	}
-
-	//	const uint8_t *font;
-	//	int font_height;
-	//	int i;
-	//	int x = 0, y = 100;
-	//	uint32_t color = 0;
-	//	font = avpriv_cga_font, font_height = 8;
-	//
-	//	char *txt = "I am StackOverflow amused.";
-	//	for (i = 0; txt[i]; i++) {
-	//		int char_y, mask;
-	//
-	//		uint8_t *p = buf[0] + y * linesize[0] + (x + i * 8) * 4;
-	//		for (char_y = 0; char_y < font_height; char_y++) {
-	//			for (mask = 0x80; mask; mask >>= 1) {
-	//				if (font[txt[i] * font_height + char_y] & mask)
-	//					AV_WL32(p, color);
-	//				p += 4;
-	//			}
-	//			p += linesize[0] - 8 * 4;
-	//		}
-	//	}
-	//	av_image_copy(rect->data, rect->linesize, (const uint8_t**) buf, linesize, mux->pix_fmt, mux->width, h);
-	rect->type = SUBTITLE_BITMAP;
-	rect->w    = mux->width;
-	rect->h    = h;
-	rect->x    = 100;
-	rect->y    = 100;
-
-
-	return sub->num_rects;
-}
-
-int
-muxer_encode_subtitle(char *text) {
-
-	int buf_max_size = 1024 * 1024, buf_size = 0, ret = 0;
-	OK
-	AVPacket packet;
-	uint8_t * buf;
-	AVSubtitle sub;
-	sub.num_rects = 0;
-	//sub.pts = out->fc;
-	sub.start_display_time = 0;
-	add_rect(&sub, text);
-
-	if ((buf = av_mallocz(buf_max_size)) == NULL) {
-		ERR_EXIT("IMAGE:'%s' failed", "av_mallocz");
-	}
-
-	if ( (buf_size = avcodec_encode_subtitle(mux->ctx_cb, buf, buf_max_size, &sub)) < 0) {
-		ERR_EXIT("SUBTITLE:'%s' failed: %s", "avcodec_encode_subtitle", av_err2str(buf_size));
-	}
-	av_hex_dump_log(NULL, AV_LOG_INFO, buf, buf_size);
-	av_init_packet(&packet);
-	packet.data = buf;
-	packet.size = buf_size;
-	packet.stream_index = mux->sb->index;
-	packet.pos = mux->fc;
-	packet.pts = mux->fc * 1000;
-	packet.dts = mux->fc * 1000;
-	packet.duration = 1000000;
-	log_packet(mux->ctx_f, &packet);
-
-	if (packet.pts != AV_NOPTS_VALUE)
-		packet.pts = av_rescale_q(packet.pts, mux->ctx_cb->time_base, mux->sb->time_base);
-
-	if (packet.dts != AV_NOPTS_VALUE)
-		packet.dts = av_rescale_q(packet.dts, mux->ctx_cb->time_base, mux->sb->time_base);
-
-	if ((ret = av_interleaved_write_frame(mux->ctx_f, &packet)) < 0) {
-		ERR_EXIT("VIDEO:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
-	}
-
-	av_free(buf);
-
-	//avsubtitle_free(&sub);
-
+	ass_get_track(text);
 	return 0;
 }

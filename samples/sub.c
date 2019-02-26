@@ -7,7 +7,7 @@
 #include <libavformat/avformat.h>
 #include <libavutil/timestamp.h>
 
-#define STREAM_FRAME_RATE 30 /* 30 frames/s
+#define STREAM_FRAME_RATE 25 /* 30 frames/s
 #*/
 #define STREAM_PIX_FMT AV_PIX_FMT_YUV420P /* default pix_fmt */
 
@@ -242,7 +242,7 @@ int main (int argc, char *argv[]) {
 	pFrame = av_frame_alloc();
 	// setup mux
 	//filename = "output_file.flv";
-	filename = "udp://127.0.0.1:1234";
+	filename = "udp://127.0.0.1:1234?pkt_size=1316";
 	fmt = av_guess_format("mpegts", NULL, NULL);
 	if (fmt == NULL) {
 		printf("Could not guess format.\n");

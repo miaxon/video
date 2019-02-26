@@ -55,7 +55,7 @@ demuxer_new (const char* name) {
 	demuxer_get_audio_stream();
 
 	if ((packet = av_packet_alloc()) == NULL) {
-		ERR_EXIT("VIDEO:'%s' failed", "av_pzcket_alloc");
+		ERR_EXIT("VIDEO:'%s' failed", "av_packet_alloc");
 	}
 	
 	start_time = av_gettime();

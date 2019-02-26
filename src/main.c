@@ -40,9 +40,9 @@ main (int argc, char **argv) {
 		.file   = NULL,
 		.stream = NULL,
 		.title  = NULL,
-		.url    = DEFAULT_URL,
-		.loop   = DEFAULT_LOOP,
-		.port   = DEFAULT_PORT,
+		.url    = NULL,
+		.loop   = 0,
+		.port   = 0,
 		.debug  = 0
 	};
 
@@ -97,7 +97,6 @@ main (int argc, char **argv) {
 
 
 	check_param(&param);
-
 	int result = vlt_start(&param);
 	result = vlt_start(&param);
 	return !result;
@@ -109,32 +108,39 @@ static void check_param (param_t *param) {
 	if (!param->file) {
 		param->file = DEFAULT_FILE;
 	}
+	
 	if (!param->stream) {
 		param->stream = DEFAULT_STREAM;
 	}
+	
+	if (!param->url) {
+		param->url = DEFAULT_URL;
+	}
 
-	if (param->port < 1024 || param->port > 65535)
-		ERR_EXIT("%s", "port value must be from 1024 to 65535");
+	if (param->port < 1024 || param->port > 65535) {
+		param->port = DEFAULT_PORT;
+	}
 
-	if (param->loop < 0)
+	if (param->loop < 0) {
 		ERR_EXIT("%s", "loop value must be positive");
+	}
 
 	INFO(
 			"\nusing params:\n"
-			"\tfile   \t'%s'\n"
-			"\tstream \t'%s'\n"
-			"\tport   \t'%d'\n"
-			"\tloop   \t'%d'\n"
-			"\turl    \t'%s'\n"
-			"\ttitle  \t'%s'\n",
-			"\tdebug  \t'%s'\n",
+			"\tfile:      '%s'\n"
+			"\tstream:    '%s'\n"
+			"\thttp port: '%d'\n"
+			"\tloop:      '%d'\n"
+			"\turl:       '%s'\n"
+			"\tsubtitle:  '%s'\n"
+			"\tdebug:      %s\n",
 			param->file,
 			param->stream,
 			param->port,
 			param->loop,
 			param->url,
 			param->title,
-			param->debug ? "Yes" : "Mo"
+			param->debug ? "Yes" : "No"
 			);
 }
 

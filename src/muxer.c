@@ -322,7 +322,7 @@ muxer_write_audio_packet(AVPacket *p) {
 void
 muxer_write_video(void) {
 
-	INFO("packet.size = %d", packet->size);
+	//INFO("packet.size = %d", packet->size);
 	//av_hex_dump_log(NULL, AV_LOG_INFO, packet.data, packet.size);
 	int ret = 0;
 	if (key_frame)

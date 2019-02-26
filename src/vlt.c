@@ -30,7 +30,7 @@ vlt_start (param_t *param) {
 	//return 0;
 
 	while ( (ret = demuxer_read()) >= 0) {
-		INFO("read %d", ret);
+		printf("read %d\n", ret);
 		switch (ret) {
 			case PACKET_AUDIO:
 				continue; // do nothing

@@ -62,9 +62,12 @@ extern "C" {
 #define ASS_DEFAULT_ALIGNMENT   2
 #define ASS_DEFAULT_BORDERSTYLE 1
 
-	void ass_init(int width, int height);
+	void 
+	ass_init(int width, int height);
 	ASS_Image*
 	ass_get_track(const char *sub);
+	int
+	ass_add_sub(AVFrame *frame);
 
 #ifdef __cplusplus
 }

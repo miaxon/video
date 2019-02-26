@@ -8,40 +8,34 @@ extern "C" {
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h> 
+#include "demuxer.h"
 
 	typedef struct {
-		AVFormatContext   *ctx_f;  // format    format context
-		AVCodecContext    *ctx_cv; // video     codec  context
-		AVCodecContext    *ctx_ca; // audio
-                AVCodecContext    *ctx_cb; // subdvb
-		AVCodec           *cv;     // video     codec
-		AVCodec           *ca;     // audio
-                AVCodec           *cb;     // subdvb
-		AVStream          *sv;     // video     stream
-		AVStream          *sa;     // audio
-                AVStream          *sb;     // subdvb
-		AVCodecParameters *pv;	   // video     codec params
-		AVCodecParameters *pa;	   // audio
-                AVCodecParameters *pb;	   // subdvb
-		int                fc;     // frame count
-
-		int width;
-		int height;
-		int pix_fmt_inp;
-                int pix_fmt_out;
+		int  fc;     // frame count
+		int  width;
+		int  height;
+		int  pix_fmt_inp;
+		int  pix_fmt_out;
 	} muxer_t;
 
-	muxer_t *
-	muxer_new(const char* name, enum AVPixelFormat pix_fmt, int width, int height);
-
-	void
-	muxer_free(muxer_t* mux);
-
 	int
-	muxer_encode_frame(AVFrame *src, const char *sub);
-		
-
-
+	muxer_add_sub(const char *text_sub);
+	int
+	muxer_encode_frame(AVFrame *src);
+	void
+	muxer_finish(void);
+	void
+	muxer_free(void);
+	muxer_t *
+	muxer_new(const char* name, demuxer_t *demux);
+	int
+	muxer_pack_video(AVFrame *src);
+	int
+	muxer_encode_video(void);
+	void
+	muxer_write_audio_packet(AVPacket *p);
+	void
+	muxer_write_video(void);
 #ifdef __cplusplus
 }
 #endif

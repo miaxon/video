@@ -26,11 +26,11 @@ vlt_start (param_t *param) {
 
 	inp = demuxer_new(param->file);
 	muxer_new(param->stream, inp);
-
+	char *sub = param->title;
 	//return 0;
 
 	while ( (ret = demuxer_read()) >= 0) {
-		printf("read %d\n", ret);
+		//printf("read %d\n", ret);
 		switch (ret) {
 			case PACKET_AUDIO:
 				continue; // do nothing
@@ -40,7 +40,7 @@ vlt_start (param_t *param) {
 				demuxer_unpack_video();
 				while ((ret = demuxer_decode_video()) >= 0) { // transcode frame
 					
-					muxer_pack_video(demuxer_get_frame_video());
+					muxer_pack_video(demuxer_get_frame_video(), sub);
 					
 					while ((ret = muxer_encode_video()) >= 0) {
 						muxer_write_video();

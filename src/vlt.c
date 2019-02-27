@@ -21,10 +21,10 @@ vlt_loop() {
 	
 	int	ret =  PACKET_UNKNOWN;
 	while ( (ret = demuxer_read()) >= 0) {
-		//printf("read %d\n", ret);
 		switch (ret) {
 			case PACKET_AUDIO:
-				continue; // do nothing
+				//continue; // do nothing
+				muxer_write_audio_packet(demuxer_get_packet());
 				break;
 			case PACKET_VIDEO:
 			{
@@ -73,7 +73,6 @@ vlt_start (param_t *param) {
 		vlt_loop();
 		demuxer_rewind();
 	}
-
 	muxer_finish();
 	demuxer_free();
 	muxer_free();

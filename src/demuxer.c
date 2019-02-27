@@ -6,8 +6,6 @@
 #include "demuxer.h"
 #include "err.h"
 #include "log.h"
-#include "utils.h"
-
 
 static AVFormatContext   *ctx_f;   // format context
 static AVCodecContext    *ctx_cv;  // codec context video

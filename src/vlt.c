@@ -10,7 +10,6 @@
 #include "log.h"
 #include "err.h"
 #include "vlt.h"
-#include "utils.h"
 #include "demuxer.h"
 #include "muxer.h"
 #include "sub.h"

@@ -70,23 +70,24 @@ static void process_client(AVIOContext *client, const char *in_uri)
     if (reply_code != 200)
         goto end;
     fprintf(stderr, "Opening input file.\n");
-    if ((ret = avio_open2(&input, in_uri, AVIO_FLAG_READ, NULL, NULL)) < 0) {
-        av_log(input, AV_LOG_ERROR, "Failed to open input: %s: %s.\n", in_uri,
-               av_err2str(ret));
-        goto end;
-    }
-    for(;;) {
-        n = avio_read(input, buf, sizeof(buf));
-        if (n < 0) {
-            if (n == AVERROR_EOF)
-                break;
-            av_log(input, AV_LOG_ERROR, "Error reading from input: %s.\n",
-                   av_err2str(n));
-            break;
-        }
-        avio_write(client, buf, n);
-        avio_flush(client);
-    }
+	avio_write(client, "Ok", 2);
+//    if ((ret = avio_open2(&input, in_uri, AVIO_FLAG_READ, NULL, NULL)) < 0) {
+//        av_log(input, AV_LOG_ERROR, "Failed to open input: %s: %s.\n", in_uri,
+//               av_err2str(ret));
+//        goto end;
+//    }
+//    for(;;) {
+//        n = avio_read(input, buf, sizeof(buf));
+//        if (n < 0) {
+//            if (n == AVERROR_EOF)
+//                break;
+//            av_log(input, AV_LOG_ERROR, "Error reading from input: %s.\n",
+//                   av_err2str(n));
+//            break;
+//        }
+//        avio_write(client, buf, n);
+//        avio_flush(client);
+//    }
 end:
     fprintf(stderr, "Flushing client\n");
     avio_flush(client);

@@ -55,16 +55,17 @@ demuxer_new (const char* name) {
 	if ((packet = av_packet_alloc()) == NULL) {
 		ERR_EXIT("VIDEO:'%s' failed", "av_packet_alloc");
 	}
-	
+
 	start_time = av_gettime();
-	
+
 	INFO("%s" , "dump input format");
 	av_dump_format(ctx_f, 0, name, 0);
-	
+
 	return mux;
 }
 
-static void demuxer_get_audio_stream() {
+static void 
+demuxer_get_audio_stream() {
 	int ret = 0;
 
 	if ((sia = av_find_best_stream(ctx_f, AVMEDIA_TYPE_AUDIO, -1, -1, &ca, 0)) == -1) {
@@ -72,7 +73,8 @@ static void demuxer_get_audio_stream() {
 	}
 
 	if (ca == NULL) {
-		ERR_EXIT("'%s' failed", "Didn't find a video input decoder");
+		ERROR("'%s' failed", "Didn't find a video input decoder");
+		return;
 	}
 
 	sa = ctx_f->streams[sia];
@@ -100,7 +102,8 @@ static void demuxer_get_audio_stream() {
 
 }
 
-static void demuxer_get_video_stream() {
+static void 
+demuxer_get_video_stream() {
 	int ret = 0;
 
 	if ((siv = av_find_best_stream(ctx_f, AVMEDIA_TYPE_VIDEO, -1, -1, &cv, 0)) == -1) {
@@ -150,7 +153,8 @@ demuxer_free (void) {
 }
 /// Delay stream 
 
-void demuxer_delay(void) {
+void 
+demuxer_delay(void) {
 	// Delay
 	AVRational time_base = ctx_f->streams[siv]->time_base;
 	AVRational time_base_q = {1, AV_TIME_BASE};
@@ -169,7 +173,7 @@ demuxer_read(void) {
 	ret = av_read_frame(ctx_f, packet);
 
 	if(ret < 0) {
-		INFO("DEMUXER:'%s' reading end: %s", "avcodec_read_frame", av_err2str(ret));
+		INFO("DEMUXER:'%s': %s", "avcodec_read_frame", av_err2str(ret));
 		return ret;
 	}
 
@@ -178,7 +182,7 @@ demuxer_read(void) {
 		return PACKET_VIDEO;
 	}
 
-	if(packet->stream_index == sia) 
+	if(packet->stream_index == sia)
 		return PACKET_AUDIO;
 
 	return PACKET_OTHER;
@@ -219,4 +223,9 @@ demuxer_get_frame_audio(void) {
 AVFrame*
 demuxer_get_frame_video(void) {
 	return vframe;
+}
+
+void
+demuxer_rewind(void) {
+	avio_seek(ctx_f->pb, 0, SEEK_SET);
 }

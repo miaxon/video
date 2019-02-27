@@ -9,4 +9,4 @@ fi
 #make clean
 #make
 cp -f $PROG $BIN
-cd $BIN && ./vlt -t 'Hello, World! Я здесь.'
+cd $BIN && ./vlt -t 'Hello, World! Я здесь.' -l 3

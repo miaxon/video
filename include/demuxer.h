@@ -25,7 +25,7 @@ extern "C" {
 		int pix_fmt;
 	} demuxer_t;
 
-	
+
 	int
 	demuxer_decode_video(void);
 	int
@@ -37,9 +37,11 @@ extern "C" {
 	AVFrame*
 	demuxer_get_frame_video(void);
 	demuxer_t *
-	demuxer_new(const char* name);	
+	demuxer_new(const char* name);
 	packet_t
-	demuxer_read(void);	
+	demuxer_read(void);
+	void
+	demuxer_rewind(void);
 	void
 	demuxer_unpack_audio(void);
 	void

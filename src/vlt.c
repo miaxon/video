@@ -12,22 +12,14 @@
 #include "vlt.h"
 #include "demuxer.h"
 #include "muxer.h"
-#include "sub.h"
+#include "net.h"
 
-int
-vlt_start (param_t *param) {
+static void vlt_loop();
 
-	if (param->debug)
-		av_log_set_level(AV_LOG_DEBUG);
-
+static void
+vlt_loop() {
+	
 	int	ret =  PACKET_UNKNOWN;
-	demuxer_t *inp = NULL;
-
-	inp = demuxer_new(param->file);
-	muxer_new(param->stream, inp);
-	char *sub = param->title;
-	//return 0;
-
 	while ( (ret = demuxer_read()) >= 0) {
 		//printf("read %d\n", ret);
 		switch (ret) {
@@ -38,15 +30,15 @@ vlt_start (param_t *param) {
 			{
 				demuxer_unpack_video();
 				while ((ret = demuxer_decode_video()) >= 0) { // transcode frame
-					
-					muxer_pack_video(demuxer_get_frame_video(), sub);
-					
+
+					muxer_pack_video(demuxer_get_frame_video(), net_get_title());
+
 					while ((ret = muxer_encode_video()) >= 0) {
 						muxer_write_video();
 					}
 					if (ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
 						ERR_EXIT("VIDEO:'%s' failed: %s", "avcodec_receive_packet", av_err2str(ret));
-					
+
 				}
 				if (ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
 					ERR_EXIT("VIDEO:'%s' failed: %s", "avcodec_receive_frame", av_err2str(ret));
@@ -56,14 +48,35 @@ vlt_start (param_t *param) {
 				continue; // do nothing
 		}
 	}
+}
 
-	INFO("VIDEO:'%s' reading end: %s", "avcodec_read_frame", av_err2str(ret));
+int
+vlt_start (param_t *param) {
+
+	int loop = param->loop;
+	if (param->debug)
+		av_log_set_level(AV_LOG_DEBUG);
+
+	demuxer_t *inp = NULL;
+
+	inp = demuxer_new(param->file);
+	muxer_new(param->stream, inp);	
+	net_init(param->title, param->port, param->url);
+
+	if(loop > 0) {
+		while(loop--) {
+			vlt_loop();
+			if(loop != 0)
+				demuxer_rewind();
+		}
+	} else {
+		vlt_loop();
+		demuxer_rewind();
+	}
+
 	muxer_finish();
-
-	//avio_seek(inp->ctx_f->pb, 0, SEEK_SET);
-	//	avformat_seek_file(inp->ctx_f, inp->siv, 0, 0, inp->sv->duration, 0);
-	//goto loop;
 	demuxer_free();
 	muxer_free();
-	return ret;
+
+	return 0;
 }

@@ -101,7 +101,8 @@ muxer_new (const char* name, demuxer_t *demux) {
 static void
 muxer_add_audio_stream(AVCodecParameters *param) {
 	int ret = 0;
-
+	if(!param)
+		return;
 	if ((sa = avformat_new_stream(ctx_f, NULL)) == NULL) {
 		ERR_EXIT("%s", "Could not create audio stream");
 	}

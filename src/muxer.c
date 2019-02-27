@@ -230,7 +230,7 @@ muxer_img_conv_init(void) {
 }
 
 int
-muxer_pack_video(AVFrame *src) {
+muxer_pack_video(AVFrame *src, const char* subtitle) {
 	int ret = 0;
 	key_frame = src->key_frame;
 
@@ -245,7 +245,7 @@ muxer_pack_video(AVFrame *src) {
 
 	//ASS_Image *sub = ass_get_track("A");
 	//blend(dst_sub, sub);
-	sub_draw(dst_sub);
+	sub_draw(dst_sub, subtitle);
 
 	if (( ret = sws_scale(ctx_sws, (const uint8_t * const*) dst_sub->data, dst_sub->linesize, 0, mux->height, dst->data, dst->linesize)) < 0) {
 		ERR_EXIT("VIDEO:'%s' failed: %s", "sws_scale", av_err2str(ret));

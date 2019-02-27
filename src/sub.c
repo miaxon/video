@@ -14,8 +14,19 @@ static ASS_Renderer *rnd;
 static ASS_Image    *img;
 static int width;
 static int height;
+
+static void sub_msg_callback(int level, const char *fmt, va_list va, void *data);
 static void sub_blend(AVFrame * frame, ASS_Image *img);
 static ASS_Track* sub_get_track(const char *sub);
+
+static void
+sub_msg_callback(int level, const char *fmt, va_list va, void *data) {
+	if (level > 3)
+		return;
+	printf("libass: ");
+	vprintf(fmt, va);
+	printf("\n");
+}
 
 static ASS_Track*
 sub_get_track(const char *sub) {
@@ -27,7 +38,8 @@ sub_get_track(const char *sub) {
 		height,
 		ASS_DEFAULT_FONT,
 		ASS_DEFAULT_FONT_SIZE,
-		sub);
+		sub ? sub : ASS_DEFAULT_TEXT);
+	
 	int size = strlen((const char*) buf);
 	//INFO("ASS: %s", buf);
 	ASS_Track *track = ass_read_memory(lib, buf, size, "utf-8");
@@ -62,19 +74,17 @@ sub_init(int w, int h) {
 	ass_set_frame_size(rnd, width, height);
 
 	ass_set_fonts(rnd, NULL, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
+
+	ass_set_message_cb(lib, sub_msg_callback, NULL);
 }
 
 int
-sub_draw(AVFrame *frame) {
-	// have new subtitle ??
-	ASS_Track *track = sub_get_track("Hello, World! Я здесь.");
+sub_draw(AVFrame *frame, const char* sub) {
+
+	ASS_Track *track = sub_get_track(sub);
 	img = ass_render_frame(rnd, track, 0, NULL);
-	//INFO("ASS img: dst_x %d, dst_y %d, stride %d, w %d, h %d", img->dst_x, img->dst_y, img->stride, img->w, img->h);
-	// else if previous image
 	sub_blend(frame, img);
 	ass_free_track(track);
-	// else do nithing
-
 	return 0;
 }
 
@@ -90,7 +100,7 @@ sub_blend(AVFrame *frame, ASS_Image *img) {
 
 		unsigned char *src;
 		unsigned char *dst;
-		
+
 		src = img->bitmap;
 		dst = frame->data[0] + img->dst_y * frame->linesize[0] + img->dst_x * 3;
 		for (y = 0; y < img->h; ++y) {

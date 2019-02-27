@@ -7,13 +7,13 @@ extern "C" {
 #endif
 
     typedef struct {
-        const char *file;
-        const char *stream;
-		const char *title;
-		const char *url;
-		int        port;
-		int        loop;
-		int        debug;
+        char *file;
+        char *stream;
+		char *title;
+		char *url;
+		int   port;
+		int   loop;
+		int   debug;
 		
 		
     } param_t;

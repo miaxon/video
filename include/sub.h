@@ -32,7 +32,7 @@ extern "C" {
 "Style: "\
 "Default,"\
 "%s,%d,"\
-"&H00FFFFFF,&H00000000,&H00080808,&H00000000,"\
+"&H00FFFFFF,&H00000000,&H00070707,&H00000000,"\
 "0,0,0,0,"\
 "100,100,"\
 "1,0,"\
@@ -46,13 +46,14 @@ extern "C" {
 
 #define ASS_DEFAULT_FONT        "Arial"
 #define ASS_DEFAULT_FONT_SIZE   16
+#define ASS_DEFAULT_TEXT        ""
 
 	void
 	sub_destroy(void);
 	void 
 	sub_init(int width, int height);
 	int
-	sub_draw(AVFrame *frame);
+	sub_draw(AVFrame *frame, const char* sub);
 
 #ifdef __cplusplus
 }

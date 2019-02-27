@@ -17,11 +17,7 @@ extern "C" {
 		int  pix_fmt_inp;
 		int  pix_fmt_out;
 	} muxer_t;
-
-	int
-	muxer_add_sub(const char *text_sub);
-	int
-	muxer_encode_frame(AVFrame *src);
+	
 	void
 	muxer_finish(void);
 	void
@@ -29,7 +25,7 @@ extern "C" {
 	muxer_t *
 	muxer_new(const char* name, demuxer_t *demux);
 	int
-	muxer_pack_video(AVFrame *src);
+	muxer_pack_video(AVFrame *src, const char* sub);
 	int
 	muxer_encode_video(void);
 	void

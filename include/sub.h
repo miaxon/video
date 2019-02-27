@@ -1,7 +1,5 @@
-
-
-#ifndef ASS_H
-#define ASS_H
+#ifndef SUB_H
+#define SUB_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,44 +32,31 @@ extern "C" {
 "Style: "\
 "Default,"\
 "%s,%d,"\
-"&H%x,&H%x,&H%x,&H%x,"\
-"%d,%d,%d,0,"\
+"&H00FFFFFF,&H00000000,&H00080808,&H00000000,"\
+"0,0,0,0,"\
 "100,100,"\
-"0,0,"\
-"%d,1,0,"\
-"%d,10,10,10,"\
-"0\r\n"\
+"1,0,"\
+"0,2,0,"\
+"2,10,10,10,"\
+"1\r\n"\
 "\r\n"\
 "[Events]\r\n"\
 "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"\
 "Dialogue: 0,0:00:00.00,0:01:00.00,Default,,0000,0000,0000,,%s\r\n"
 
-
-#define ASS_DEFAULT_PLAYRESX 100
-#define ASS_DEFAULT_PLAYRESY 100
-
 #define ASS_DEFAULT_FONT        "Arial"
-#define ASS_DEFAULT_FONT_SIZE   32
-#define ASS_PRIMARY_COLOR       0xffffff
-#define ASS_SECONDARY_COLOR     0xffffff
-#define ASS_OUTLINE_COLOR       0
-#define ASS_BACK_COLOR          0
-#define ASS_DEFAULT_BOLD        0
-#define ASS_DEFAULT_ITALIC      0
-#define ASS_DEFAULT_UNDERLINE   0
-#define ASS_DEFAULT_ALIGNMENT   2
-#define ASS_DEFAULT_BORDERSTYLE 1
+#define ASS_DEFAULT_FONT_SIZE   16
 
+	void
+	sub_destroy(void);
 	void 
-	ass_init(int width, int height);
-	ASS_Image*
-	ass_get_track(const char *sub);
+	sub_init(int width, int height);
 	int
-	ass_add_sub(AVFrame *frame);
+	sub_draw(AVFrame *frame);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ASS_H */
+#endif /* SUB_H */
 

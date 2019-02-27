@@ -13,7 +13,7 @@
 #include "utils.h"
 #include "demuxer.h"
 #include "muxer.h"
-#include "ass.h"
+#include "sub.h"
 
 int
 vlt_start (param_t *param) {

@@ -12,7 +12,7 @@
 #include "err.h"
 #include "log.h"
 #include "utils.h"
-#include "ass.h"
+#include "sub.h"
 
 
 #define OUTPUT_FORMAT            "mpegts"
@@ -58,11 +58,11 @@ muxer_new (const char* name, demuxer_t *demux) {
 	int ret = 0;
 
 	if ((packet = av_packet_alloc()) == NULL) {
-		ERR_EXIT("VIDEO:'%s' failed", "av_pzcket_alloc");
+		ERR_EXIT("VIDEO:'%s' failed", "av_packet_alloc");
 	}
 
 	if ((mux = (muxer_t*) av_mallocz(sizeof *mux)) == NULL) {
-		ERR_EXIT("'%s' failed", "av_mallocz");
+		ERR_EXIT("'%s' failed", "av_malloc");
 	}
 
 	if ((ret = avformat_alloc_output_context2(&ctx_f, NULL, OUTPUT_FORMAT, name)) < 0) {
@@ -82,7 +82,7 @@ muxer_new (const char* name, demuxer_t *demux) {
 	muxer_add_video_stream(demux->pv);
 	muxer_add_audio_stream(demux->pa);		
 	muxer_img_conv_init();
-	ass_init(mux->width, mux->height);
+	sub_init(mux->width, mux->height);
 
 	if ( (ret = avformat_write_header(ctx_f, NULL)) < 0) {
 		ERR_EXIT("'%s' failed: %s", "avformat_write_header", av_err2str(ret));
@@ -229,48 +229,6 @@ muxer_img_conv_init(void) {
 	}
 }
 
-static void blend_single(AVFrame * frame, ASS_Image *img) {
-
-#define _r(c)  ((c)>>24)
-#define _g(c)  (((c)>>16)&0xFF)
-#define _b(c)  (((c)>>8)&0xFF)
-#define _a(c)  ((c)&0xFF)
-
-	int x, y;
-	unsigned char opacity = 255 - _a(img->color);
-	unsigned char r = _r(img->color);
-	unsigned char g = _g(img->color);
-	unsigned char b = _b(img->color);
-
-	unsigned char *src;
-	unsigned char *dst;
-
-	src = img->bitmap;
-	dst = frame->data[0] + img->dst_y * frame->linesize[0] + img->dst_x * 3;
-	for (y = 0; y < img->h; ++y) {
-		for (x = 0; x < img->w; ++x) {
-			unsigned k = ((unsigned) src[x]) * opacity / 255;
-			// possible endianness problems
-			dst[x * 3] = (k * b + (255 - k) * dst[x * 3]) / 255;
-			dst[x * 3 + 1] = (k * g + (255 - k) * dst[x * 3 + 1]) / 255;
-			dst[x * 3 + 2] = (k * r + (255 - k) * dst[x * 3 + 2]) / 255;
-		}
-		src += img->stride;
-		dst += frame->linesize[0];
-	}
-}
-
-static void blend(AVFrame *frame, ASS_Image *img) {
-	int cnt = 0;
-	while (img) {
-		blend_single(frame, img);
-		++cnt;
-		img = img->next;
-	}
-	printf("%d images blended\n", cnt);
-}
-// convert image to output format
-
 int
 muxer_pack_video(AVFrame *src) {
 	int ret = 0;
@@ -287,6 +245,7 @@ muxer_pack_video(AVFrame *src) {
 
 	//ASS_Image *sub = ass_get_track("A");
 	//blend(dst_sub, sub);
+	sub_draw(dst_sub);
 
 	if (( ret = sws_scale(ctx_sws, (const uint8_t * const*) dst_sub->data, dst_sub->linesize, 0, mux->height, dst->data, dst->linesize)) < 0) {
 		ERR_EXIT("VIDEO:'%s' failed: %s", "sws_scale", av_err2str(ret));

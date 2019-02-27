@@ -13,16 +13,21 @@
 #include "vlt.h"
 
 //#define DEFAULT_FILE    "/mnt/WDC/CINEMA/er/ER_s01/ER.01x01.-.24.hours.rus.avi"
-//#define DEFAULT_FILE    "../assets/sample.mp4"
-#define DEFAULT_FILE    "../assets/sample.avi"
-//#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
+#define DEFAULT_FILE    "../assets/sample.mp4"
+//#define DEFAULT_FILE    "../assets/sample.avi"
+
+#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
 //#define DEFAULT_STREAM   "udp://127.0.0.1:1234?pkt_size=1316"
 //#define DEFAULT_STREAM   "udp://224.1.1.1:1234?pkt_size=1316"
-#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
+//#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
 
-#define DEFAULT_PORT     4535
-#define DEFAULT_URL      "/subtitle"
-#define DEFAULT_LOOP     0
+#define DEFAULT_PORT      4535
+#define DEFAULT_URL       "/subtitle"
+#define DEFAULT_LOOP      0
+#define DEFAULT_DEBUG     0
+#define DEFAULT_AUDIO     0
+#define DEFAULT_NET       1
+
 
 _Noreturn static void print_usage (void);
 _Noreturn static void print_version (void);
@@ -42,13 +47,15 @@ main (int argc, char **argv) {
 		.stream = NULL,
 		.title  = NULL,
 		.url    = NULL,
-		.loop   = 0,
-		.port   = 0,
-		.debug  = 0
+		.loop   = DEFAULT_LOOP,
+		.port   = DEFAULT_PORT,
+		.debug  = DEFAULT_DEBUG,
+		.audio  = DEFAULT_AUDIO,
+		.net    = DEFAULT_NET
 	};
 
 	int longindex, c;
-	const char *optstring = "f:s:l:p:u:t:dvh";
+	const char *optstring = "f:s:l:p:u:t:andvh";
 	const struct option longopts[] = {
 		{ "file",    required_argument, NULL, 'f'},
 		{ "stream",  required_argument, NULL, 's'},
@@ -56,6 +63,8 @@ main (int argc, char **argv) {
 		{ "port",    required_argument, NULL, 'p'},
 		{ "url",     required_argument, NULL, 'u'},
 		{ "title",   required_argument, NULL, 't'},
+		{ "net",     no_argument, NULL, 'n'},
+		{ "audio",   no_argument, NULL, 'a'},
 		{ "debug",   no_argument, NULL, 'd'},
 		{ "version", no_argument, NULL, 'v'},
 		{ "help",    no_argument, NULL, 'h'},
@@ -81,6 +90,11 @@ main (int argc, char **argv) {
 				break;
 			case 'l':
 				param.loop = parse_int(optarg);
+				break;
+			case 'a':
+				param.audio = 1;
+			case 'n':
+				param.net = 1;
 				break;
 			case 'd':
 				param.debug = 1;
@@ -109,11 +123,11 @@ static void check_param (param_t *param) {
 	if (!param->file) {
 		param->file = DEFAULT_FILE;
 	}
-	
+
 	if (!param->stream) {
 		param->stream = DEFAULT_STREAM;
 	}
-	
+
 	if (!param->url) {
 		param->url = DEFAULT_URL;
 	}
@@ -127,22 +141,26 @@ static void check_param (param_t *param) {
 	}
 
 	INFO(
-			"\nusing params:\n"
-			"\tfile:      '%s'\n"
-			"\tstream:    '%s'\n"
-			"\thttp port: '%d'\n"
-			"\tloop:      '%d'\n"
-			"\turl:       '%s'\n"
-			"\tsubtitle:  '%s'\n"
-			"\tdebug:      %s\n",
-			param->file,
-			param->stream,
-			param->port,
-			param->loop,
-			param->url,
-			param->title,
-			param->debug ? "Yes" : "No"
-			);
+		"\nusing params:\n"
+		"\tfile:      '%s'\n"
+		"\tstream:    '%s'\n"
+		"\thttp port: '%d'\n"
+		"\tloop:      '%d'\n"
+		"\turl:       '%s'\n"
+		"\tsubtitle:  '%s'\n"
+		"\taudio:      %s\n"
+		"\tnet:        %s\n"
+		"\tdebug:      %s\n",
+		param->file,
+		param->stream,
+		param->port,
+		param->loop,
+		param->url,
+		param->title,
+		param->audio ? "Yes" : "No",
+		param->net ? "Yes" : "No",
+		param->debug ? "Yes" : "No"
+		);
 }
 
 static int
@@ -161,17 +179,17 @@ parse_int (const char* src) {
 _Noreturn static void
 print_usage (void) {
 	printf(
-			"Usage: vlt [slputfvh] [OPTION]\n"
-			"\t-s, --stream\t stream on udp://<ip>:<port> (default '"DEFAULT_STREAM"')\n"
-			"\t-l, --loop\t looping stream, 0 - infinitely looping (default 0)\n"
-			"\t-p, --port\t http port to listen (default '4535')\n"
-			"\t-u, --url\t url to listen(default '"DEFAULT_URL"'\n"
-			"\t-t, --title\t initial title (default empty)\n"
-			"\t-f, --file\t video file for streaming( default '"DEFAULT_FILE"')\n"
-			"\t-v, --version\t print version and exit\n"
-			"\t-h, --help\t print this help and exit\n\n"
-			"\texample: vlt -p 1333 -u /settext -s udp://224.1.1.3:1234 -f /home/user/my_video.mp4\n\n"
-			);
+		"Usage: vlt [slputfvh] [OPTION]\n"
+		"\t-s, --stream\t stream on udp://<ip>:<port> (default '"DEFAULT_STREAM"')\n"
+		"\t-l, --loop\t looping stream, 0 - infinitely looping (default 0)\n"
+		"\t-p, --port\t http port to listen (default '4535')\n"
+		"\t-u, --url\t url to listen(default '"DEFAULT_URL"'\n"
+		"\t-t, --title\t initial title (default empty)\n"
+		"\t-f, --file\t video file for streaming( default '"DEFAULT_FILE"')\n"
+		"\t-v, --version\t print version and exit\n"
+		"\t-h, --help\t print this help and exit\n\n"
+		"\texample: vlt -p 1333 -u /settext -s udp://224.1.1.3:1234 -f /home/user/my_video.mp4\n\n"
+		);
 	exit(1);
 }
 

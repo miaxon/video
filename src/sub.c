@@ -44,7 +44,7 @@ sub_get_track(const char *sub) {
 	//INFO("ASS: %s", buf);
 	ASS_Track *track = ass_read_memory(lib, buf, size, "utf-8");
 	if (!track) {
-		ERR_EXIT("ASS:'%s' failed", "ass_read_memory");
+		ERR_EXIT("SUB:'%s' failed", "ass_read_memory");
 	}
 	av_free(buf);
 	return track;
@@ -56,11 +56,11 @@ sub_init(int w, int h) {
 	height = h;
 
 	if ((lib = ass_library_init()) == NULL) {
-		ERR_EXIT("ASS:'%s' failed", "ass_library_init");
+		ERR_EXIT("SUB:'%s' failed", "ass_library_init");
 	}
 
 	if ((rnd = ass_renderer_init(lib)) == NULL) {
-		ERR_EXIT("ASS:'%s' failed", "ass_render_init");
+		ERR_EXIT("SUB:'%s' failed", "ass_render_init");
 	}
 
 	ass_set_use_margins(rnd, 0);

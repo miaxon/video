@@ -9,16 +9,18 @@ extern "C" {
     typedef struct {
         char *file;
         char *stream;
-		char *title;
-		char *url;
-		int   port;
-		int   loop;
-		int   debug;
+        char *title;
+        char *url;
+        int port;
+        int loop;
+        int debug;
+        int audio;
+        int net;
     } param_t;
 
     int
     vlt_start(param_t *param);
-    
+
 #ifdef __cplusplus
 }
 #endif

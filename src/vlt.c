@@ -59,7 +59,7 @@ vlt_start (param_t *param) {
 
 	demuxer_t *inp = NULL;
 
-	inp = demuxer_new(param->file);
+	inp = demuxer_new(param->file, param->audio);
 	muxer_new(param->stream, inp);	
 	net_init(param->title, param->port, param->url);
 

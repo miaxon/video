@@ -44,7 +44,7 @@ Usage: vlt -f <file> [slrutavh]
 
         or open http://127.0.0.1:4545/settext in your web browser and try it
 
-Тестовый видеофайл находится в каталоге ./assets. Пример запуска - скрипт run.bash.
+Тестовый видеофайл находится в каталоге ./assets. Пример запуска - скрипт run.sh.
 
 3. Проблемы.
 

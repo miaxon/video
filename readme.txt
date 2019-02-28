@@ -38,11 +38,11 @@ Usage: vlt -f <file> [slrutavh]
         -v, --version    print version and exit
         -h, --help       print this help and exit
 
-        example: vlt -n http://127.0.0.1:4545 -u /settext -s udp://224.1.1.3:1234 -f /home/user/my_video.mp4 -t 'Default subtitle' -a
+        example: vlt -u http://127.0.0.1:4545 -r settext -s udp://224.1.1.3:1234 -f /home/user/my_video.mp4 -t 'Default subtitle' -a
 
-        set text on video: curl http://127.0.0.1:4545/sub?text=hello 
+        set text on video: curl http://127.0.0.1:4545/settext?text=hello 
 
-        or open http://<url>/sub in your web browser and try it
+        or open http://127.0.0.1:4545/settext in your web browser and try it
 
 Тестовый видеофайл находится в каталоге ./assets. Пример запуска - скрипт run.bash.
 

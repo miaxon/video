@@ -18,11 +18,13 @@ extern "C" {
     } packet_t;
 
     typedef struct {
-        AVCodecParameters *pv;
-        AVCodecParameters *pa;
         int width;
         int height;
         int pix_fmt;
+        int audio;
+        AVCodecParameters *pa;
+        AVRational atb;
+        AVRational vtb;
     } demuxer_t;
 
 

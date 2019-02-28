@@ -11,7 +11,7 @@ static AVFormatContext   *ctx_f;   // format context
 static AVCodecContext    *ctx_cv;  // codec context video
 static AVCodecContext    *ctx_ca;  // codec context video
 static AVCodec           *cv;      // codec video
-static AVCodec           *ca;      // codec audio
+//static AVCodec           *ca;      // codec audio
 static AVStream          *sv;      // stream video
 static AVStream          *sa;
 
@@ -22,8 +22,8 @@ static demuxer_t *mux;
 static AVPacket  *packet;     // encoded data
 static int64_t    start_time;
 
-static int siv;          // stream index video
-static int sia;          // stream index audio
+static int siv = -1;          // stream index video
+static int sia = -1;          // stream index audio
 
 static void demuxer_get_video_stream();
 static void demuxer_get_audio_stream();
@@ -32,11 +32,19 @@ static void demuxer_delay();
 demuxer_t *
 demuxer_new (const char* name, int audio) {
 	int	ret = 0;
-
+	
 	if ((mux = (demuxer_t*) av_mallocz(sizeof *mux)) == NULL) {
 		ERR_EXIT("DEMUXER:'%s' failed", "av_mallocz");
 	}
-
+	
+	if ((mux->pa = (AVCodecParameters*) av_mallocz(sizeof *mux->pa)) == NULL) {
+		ERR_EXIT("DEMUXER:'%s' failed", "av_mallocz");
+	}
+	
+	if ((packet = av_packet_alloc()) == NULL) {
+		ERR_EXIT("DEMUXER:'%s' failed", "av_packet_alloc");
+	}
+	
 	if ((ret = avformat_open_input(&ctx_f, name, NULL, NULL)) != 0) {
 		ERR_EXIT("DEMUXER:'%s' failed: %s", "avformat_open_input", av_err2str(ret));
 	}
@@ -48,61 +56,31 @@ demuxer_new (const char* name, int audio) {
 	if ((ret = avformat_find_stream_info(ctx_f, NULL)) < 0) {
 		ERR_EXIT("DEMUXER:'%s' failed: %s", "avformat_find_stream_info", av_err2str(ret));
 	}
-
 	demuxer_get_video_stream();
+	mux->audio = audio;
 	if (audio)
 		demuxer_get_audio_stream();
-	else 
-		INFO("DEMUXER:%s", "audio stream disabled");
-
-	if ((packet = av_packet_alloc()) == NULL) {
-		ERR_EXIT("DEMUXER:'%s' failed", "av_packet_alloc");
-	}
-
+	
+	INFO("DEMUXER: audio stream %s", mux->audio ? "enabled": "disabled");
+		
 	start_time = av_gettime();
-
-	INFO("%s" , "dump input format");
 	av_dump_format(ctx_f, 0, name, 0);
-
 	return mux;
 }
 
 static void
 demuxer_get_audio_stream() {
 	int ret = 0;
-
-	if ((sia = av_find_best_stream(ctx_f, AVMEDIA_TYPE_AUDIO, -1, -1, &ca, 0)) == -1) {
-		ERR_EXIT("DEMUXER:%s", "Didn't find a audio input stream");
-	}
-
-	if (ca == NULL) {
-		ERROR("DEMUXER:'%s' failed", "Didn't find a video input decoder");
+	if ((sia = av_find_best_stream(ctx_f, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0)) < 0) {
+		mux->audio = 0;
+		ERROR("DEMUXER:'%s' failed: %s", "av_find_best_stream", av_err2str(sia));
 		return;
 	}
-
 	sa = ctx_f->streams[sia];
-	mux->pa = sa->codecpar;
-
-	if ((ctx_ca = avcodec_alloc_context3(ca)) == NULL) {
-		ERR_EXIT("DEMUXER:'%s' failed", "avcodec_alloc_context3");
+	if ((ret = avcodec_parameters_copy(mux->pa, sa->codecpar)) < 0) {
+		ERR_EXIT("DEMUXER:'%s' failed: %s", "avcodec_parameters_copy", av_err2str(ret));
 	}
-
-	if ((ret = avcodec_parameters_to_context(ctx_ca, mux->pa)) < 0) {
-		ERR_EXIT("DEMUXER:'%s' failed: %s", "avcodec_parameters_to_context", av_err2str(ret));
-	}
-
-	if (ctx_ca == NULL) {
-		ERR_EXIT("DEMUXER:'%s' failed", "Didn't have video code context");
-	}
-
-	if ((ret = avcodec_open2(ctx_ca, ca, NULL)) < 0) {
-		ERR_EXIT("DEMUXER:'%s' failed: %s", "avcodec_open2", av_err2str(ret));
-	}
-
-	if ((aframe = av_frame_alloc()) == NULL) {
-		ERR_EXIT("DEMUXER:'%s' failed", "av_frame_alloc");
-	}
-
+	mux->atb = sa->time_base;
 }
 
 static void
@@ -118,31 +96,31 @@ demuxer_get_video_stream() {
 	}
 
 	sv = ctx_f->streams[siv];
-	mux->pv = sv->codecpar;
 
 	if ((ctx_cv = avcodec_alloc_context3(cv)) == NULL) {
 		ERR_EXIT("DEMUXER:'%s' failed", "avcodec_alloc_context3");
-	}
-
-	if ((ret = avcodec_parameters_to_context(ctx_cv, mux->pv)) < 0) {
-		ERR_EXIT("DEMUXER:'%s' failed: %s", "avcodec_parameters_to_context", av_err2str(ret));
 	}
 
 	if (ctx_cv == NULL) {
 		ERR_EXIT("DEMUXER:'%s' failed", "Didn't have video code context");
 	}
 
+	if ((ret = avcodec_parameters_to_context(ctx_cv, sv->codecpar)) < 0) {
+		ERR_EXIT("'%s' failed: %s", "avcodec_parameters_to_context", av_err2str(ret));
+	}
+
 	if ((ret = avcodec_open2(ctx_cv, cv, NULL)) < 0) {
 		ERR_EXIT("DEMUXER:'%s' failed: %s", "avcodec_open2", av_err2str(ret));
+	}
+
+	if ((vframe = av_frame_alloc()) == NULL) {
+		ERR_EXIT("DEMUXER:'%s' failed", "av_frame_alloc");
 	}
 
 	mux->width   = ctx_cv->width;
 	mux->height  = ctx_cv->height;
 	mux->pix_fmt = ctx_cv->pix_fmt;
-
-	if ((vframe = av_frame_alloc()) == NULL) {
-		ERR_EXIT("DEMUXER:'%s' failed", "av_frame_alloc");
-	}
+	mux->vtb     = sv->time_base;
 }
 
 void
@@ -185,8 +163,9 @@ demuxer_read(void) {
 		return PACKET_VIDEO;
 	}
 
-	if (packet->stream_index == sia)
+	if (packet->stream_index == sia) {
 		return PACKET_AUDIO;
+	}
 
 	return PACKET_OTHER;
 
@@ -235,8 +214,9 @@ demuxer_get_frame_video(void) {
 
 void
 demuxer_rewind(void) {
-	int64_t ret = 0;
+	int64_t ret = 0;	
 	if ((ret = avio_seek(ctx_f->pb, 0, SEEK_SET)) < 0) {
 		ERR_EXIT("DEMUXER:'%s' failed: %s", "avio_seek", av_err2str(ret));
 	}
+	avio_flush(ctx_f->pb);
 }

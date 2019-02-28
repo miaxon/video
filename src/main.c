@@ -23,7 +23,7 @@
 
 #define DEFAULT_PORT      4535
 #define DEFAULT_URL       "/subtitle"
-#define DEFAULT_LOOP      0
+#define DEFAULT_LOOP      0      // infinitely loop
 #define DEFAULT_DEBUG     0
 #define DEFAULT_AUDIO     0
 #define DEFAULT_NET       1
@@ -137,7 +137,7 @@ static void check_param (param_t *param) {
 	}
 
 	if (param->loop < 0) {
-		ERR_EXIT("%s", "loop value must be positive or zero (default)");
+		ERR_EXIT("%s", "loop value must be positive (default)");
 	}
 
 	INFO(
@@ -145,7 +145,7 @@ static void check_param (param_t *param) {
 		"\tfile:      '%s'\n"
 		"\tstream:    '%s'\n"
 		"\thttp port: '%d'\n"
-		"\tloop:      '%d'\n"
+		"\tloop:      '%d'%s\n"
 		"\turl:       '%s'\n"
 		"\tsubtitle:  '%s'\n"
 		"\taudio:      %s\n"
@@ -154,7 +154,7 @@ static void check_param (param_t *param) {
 		param->file,
 		param->stream,
 		param->port,
-		param->loop,
+		param->loop, param->loop ? "" : "(Infinitely)",
 		param->url,
 		param->title,
 		param->audio ? "Yes" : "No",

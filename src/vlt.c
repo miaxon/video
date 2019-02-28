@@ -18,13 +18,14 @@ static void vlt_loop();
 
 static void
 vlt_loop() {
-	
+
 	int	ret =  PACKET_UNKNOWN;
 	while ( (ret = demuxer_read()) >= 0) {
 		switch (ret) {
 			case PACKET_AUDIO:
-				//continue; // do nothing
-				muxer_write_audio_packet(demuxer_get_packet());
+			{
+				muxer_write_audio(demuxer_get_packet());
+			}
 				break;
 			case PACKET_VIDEO:
 			{
@@ -58,21 +59,26 @@ vlt_start (param_t *param) {
 		av_log_set_level(AV_LOG_DEBUG);
 
 	demuxer_t *inp = NULL;
-
 	inp = demuxer_new(param->file, param->audio);
-	muxer_new(param->stream, inp);	
+	OK
+	muxer_new(param->stream, inp);
 	net_init(param->title, param->port, param->url);
 
-	if(loop > 0) {
-		while(loop--) {
+	if (loop == 0) {
+		for (; ; ) {
 			vlt_loop();
-			if(loop != 0)
-				demuxer_rewind();
+			demuxer_rewind();
 		}
-	} else {
-		vlt_loop();
-		demuxer_rewind();
 	}
+	
+	if (loop > 0) {
+		for (int i = 0; i < loop - 1; i++) {
+			vlt_loop();
+			demuxer_rewind();
+		}
+		vlt_loop();
+	}
+	
 	muxer_finish();
 	demuxer_free();
 	muxer_free();

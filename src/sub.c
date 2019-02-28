@@ -68,19 +68,19 @@ static ASS_Track*
 sub_get_track(const char *sub) {
 
 	char *buf  = av_asprintf(
-		ASS_TRACK_STRING,
-		AV_STRINGIFY(LIBAVCODEC_VERSION),
-		width,
-		height,
-		ASS_DEFAULT_FONT,
-		ASS_DEFAULT_FONT_SIZE,
-		sub ? sub : ASS_DEFAULT_TEXT);
-	
+							ASS_TRACK_STRING,
+							AV_STRINGIFY(LIBAVCODEC_VERSION),
+							width,
+							height,
+							ASS_DEFAULT_FONT,
+							ASS_DEFAULT_FONT_SIZE,
+							sub ? sub : ASS_DEFAULT_TEXT);
+
 	int size = strlen((const char*) buf);
 	//INFO("ASS: %s", buf);
 	ASS_Track *track = ass_read_memory(lib, buf, size, "utf-8");
 	if (!track) {
-		ERR_EXIT("SUB:'%s' failed", "ass_read_memory");
+		ERROR("SUB:'%s' failed", "ass_read_memory");
 	}
 	av_free(buf);
 	return track;
@@ -117,7 +117,10 @@ sub_init(int w, int h) {
 int
 sub_draw(AVFrame *frame, const char* sub) {
 
-	ASS_Track *track = sub_get_track(sub);
+	ASS_Track *track  = NULL;
+	if ((track = sub_get_track(sub)) == NULL) {
+		return -1;
+	}
 	img = ass_render_frame(rnd, track, 0, NULL);
 	sub_blend(frame, img);
 	ass_free_track(track);

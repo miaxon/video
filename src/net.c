@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
+#include <libavutil/avstring.h>
 
 
 #include "net.h"
@@ -11,33 +12,47 @@
 
 #define SUB_SIZE 256
 
-static char sub[SUB_SIZE];
-static char txt[SUB_SIZE]; // static pointer to currenet subtitle text;
+#define LOCK(x) if (pthread_mutex_lock(&x) != 0)\
+		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_lock");
+#define UNLOCK(x) if (pthread_mutex_unlock(&x) != 0)\
+		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_unlock");
+
+static char sub[SUB_SIZE]; // provided for internal use
+static char txt[SUB_SIZE]; // provided for external use
 static char *url;
 static char *res;
-static pthread_mutex_t lock;
+static unsigned const char *html;
+static pthread_mutex_t mutex;
 
-static unsigned const char *html = (unsigned char*) \
+#define HTTP_FORM \
 "<!DOCTYPE html>"\
 "<html>"\
 "<body>"\
-"<h4>Set subtitle on video:</h4>"\
-"<form accept-charset='utf-8' action='/subtitle'>"\
-"<p>Note 1: input text is 256 characher's line.</p>"\
+"<h4>Set subtitle on video.</h4>"\
+"<form id='form' accept-charset='utf-8' action='/%s'>"\
+"<p>Note 1: input text must be not over 256 characher's length in 3 lines.</p>"\
+"<p>Note 2: max lines number is 3.</p>"\
 "<p>Note 2: use '\\N' as newline delimiter.</p>"\
 "Text:<br>"\
-"<input type='text' name='text'>"\
-"<br><br>"\
+"<textarea rows='4' cols='50' name='text' form='form'></textarea><br>"\
 "<input type='submit' value='Submit'>"\
 "</form>"\
 "</body>"\
 "</html>"\
-;
 
 typedef void * (* entry_t)(void *) ;
 static void  net_thread(void *param);
 static int   net_client(AVIOContext *client);
 static void  net_set_subtitle(const char* text);
+static int   net_parse_request(char *str);
+
+void
+net_clear(void) {
+	LOCK(mutex)
+	memset(sub, 0, SUB_SIZE);
+	memset(txt, 0, SUB_SIZE);
+	UNLOCK(mutex)
+}
 
 int
 net_init(char *t, char *u, char *r) {
@@ -50,6 +65,10 @@ net_init(char *t, char *u, char *r) {
 	res  = r;
 	entry_t entry = (entry_t) net_thread;
 
+	if ((html = (unsigned char*)av_asprintf(HTTP_FORM, res)) == NULL) {
+		ERR_EXIT("HTTP:'%s' failed: %s", "av_asprintf");
+	}
+	
 	if ((ret = pthread_attr_init(&attr)) != 0) {
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_attr_init");
 	}
@@ -58,7 +77,7 @@ net_init(char *t, char *u, char *r) {
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_attr_setdetachstate");
 	}
 
-	if ((ret = pthread_mutex_init(&lock, NULL)) != 0) {
+	if ((ret = pthread_mutex_init(&mutex, NULL)) != 0) {
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_init");
 	}
 
@@ -73,30 +92,49 @@ net_init(char *t, char *u, char *r) {
 	return 0;
 }
 
+static int
+net_parse_request(char *str) {
+	int len = strlen(res);
+	int rlen = strlen(str + 1);
+	int cmp = strncmp((str + 1), res, strlen(res));
+	char *req = strstr(str, "?");
+
+	if (!req && len == rlen && !strcmp(res, str + 1))
+		return 200;
+	
+	if (req && (req  - (str + 1)) != len)
+		return AVERROR_HTTP_NOT_FOUND;
+
+	if (str && str[0] == '/' && !cmp) {
+		if (len < rlen && url_decode(str) == 0) {
+			char *txt = strstr(str, "?text=");
+			if (txt) {
+				net_set_subtitle(strstr(str, "=") + 1);
+			}
+		}
+	}
+	return 200;
+}
+
 static void
-net_set_subtitle(const char* text) {
-	if (pthread_mutex_lock(&lock) != 0)
-		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_lock");
+net_set_subtitle(const char* str) {
+	LOCK(mutex)
 
 	memset(sub, 0, SUB_SIZE);
-	strncpy(sub, text, SUB_SIZE - 1);
+	strncpy(sub, str, SUB_SIZE - 1);
 	INFO("HTTP:set new subtitle text '%s'", sub);
 
-	if (pthread_mutex_unlock(&lock) != 0)
-		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_unlock");
+	UNLOCK(mutex)
 }
 
 char*
 net_subtitle(void) {
-	if (pthread_mutex_lock(&lock) != 0)
-		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_lock");
+	LOCK(mutex)
 
 	memset(txt, 0, SUB_SIZE);
 	strncpy(txt, sub, SUB_SIZE - 1);
 
-	if (pthread_mutex_unlock(&lock) != 0)
-		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_unlock");
-
+	UNLOCK(mutex)
 	return txt;
 }
 
@@ -125,12 +163,12 @@ net_thread(void *param) {
 			break;
 	}
 	INFO("HTTP: stop http listen: %s", url);
-	pthread_mutex_destroy(&lock);
+	pthread_mutex_destroy(&mutex);
 	avio_close(server);
 }
 
 static int
-net_client(AVIOContext *client) {
+net_client(AVIOContext * client) {
 	int ret, reply_code;
 	char *resource = NULL;
 
@@ -145,28 +183,11 @@ net_client(AVIOContext *client) {
 		return 0;
 	}
 
-	if (resource && resource[0] == '/' && !strncmp((resource + 1), res, strlen(res))) {
-
-		reply_code = 200;
-
-		if (url_decode(resource) == 0) {
-			char *txt = strstr(resource, "?text=");
-			if (txt) {
-				net_set_subtitle(strstr(resource, "=") + 1);
-			} else {
-				ERROR("Invalid parameters string '%s'", resource);
-				reply_code = AVERROR_HTTP_BAD_REQUEST;
-			}
-		} else {
-			ERROR("Failed to decode '%s'", resource);
-			reply_code = AVERROR_HTTP_BAD_REQUEST;
-		}
-	} else {
-		reply_code = AVERROR_HTTP_NOT_FOUND;
-	}
+	reply_code = net_parse_request(resource);
+	av_freep(&resource);
 
 	if (reply_code == 200) {
-		if ((ret = av_opt_set(client, "location", "/subtitle", AV_OPT_SEARCH_CHILDREN)) < 0) {
+		if ((ret = av_opt_set(client, "location", "/sub", AV_OPT_SEARCH_CHILDREN)) < 0) {
 			ERR_EXIT("HTTP:'%s' failed: %s", "av_opt_set_int", av_err2str(ret));
 		}
 	}

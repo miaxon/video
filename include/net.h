@@ -10,6 +10,8 @@ extern "C" {
 	
 	char*
 	net_subtitle(void);
+        void
+        net_clear(void);
 
 #ifdef __cplusplus
 }

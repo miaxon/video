@@ -12,10 +12,6 @@
 #include "log.h"
 #include "vlt.h"
 
-//#define DEFAULT_FILE    "/mnt/WDC/CINEMA/er/ER_s01/ER.01x01.-.24.hours.rus.avi"
-#define DEFAULT_FILE    "../assets/sample.mp4"
-//#define DEFAULT_FILE    "../assets/sample.avi"
-
 #define DEFAULT_STREAM   "udp://127.0.0.1:1234"
 //#define DEFAULT_STREAM   "udp://127.0.0.1:1234?pkt_size=1316"
 //#define DEFAULT_STREAM   "udp://224.1.1.1:1234?pkt_size=1316"
@@ -103,17 +99,15 @@ main (int argc, char **argv) {
 		};
 	};
 
-	INFO("URL: %s", param.url);
 	check_param(&param);
 	int result = vlt_start(&param);
 	return result;
 }
 
-/// Check params
-
-static void check_param (param_t *param) {
+static void
+check_param (param_t *param) {
 	if (!param->file) {
-		param->file = DEFAULT_FILE;
+		print_usage();
 	}
 
 	if (!param->stream) {
@@ -161,27 +155,25 @@ parse_int (const char* src) {
 _Noreturn static void
 print_usage (void) {
 	printf(
-		"Usage: vlt [slputfvh] [OPTION]\n"
-		"\t-f, --file\t video file for streaming( default '%s')\n"
+		"Usage: vlt -f <file> [slrutavh]\n"
+		"\t-f, --file\t video file for streaming (required)\n"
 		"\t-s, --stream\t stream: udp://<ip>:<port> (default '%s')\n"
 		"\t-l, --loop\t looping stream, 0 - infinitely loop (default %d)\n"
 		"\t-r, --res\t http resource(default '%s')\n"
 		"\t-u, --url\t http url to listen (default off)\n"
-		"\t-t, --title\t initial title (default empty)\n"
-		"\t-a, --audio\t try stream audio (default off)\n"
+		"\t-t, --title\t initial title (default empty string)\n"
+		"\t-a, --audio\t enable stream audio (default disabled)\n"
 		"\t-v, --version\t print version and exit\n"
 		"\t-h, --help\t print this help and exit\n\n"
-		"\texample: vlt -n http://127.0.0.1:4545 -u /settext -s udp://224.1.1.3:1234 -f /home/user/my_video.mp4 -t 'Default subtitle' -a\n\n"
-		"\tset text on video: curl 'http://127.0.0.1:4545/subtitle?text=aa s'\n\n",
-		DEFAULT_FILE,
+		"\texample: vlt -u http://127.0.0.1:4545 -r settext -s udp://224.1.1.3:1234 -f /home/user/my_video.mp4 -t 'Default subtitle' -a\n\n"
+		"\tset text on video: curl http://127.0.0.1:4545/settext?text=hello \n\n"
+		"\tor open http://127.0.0.1:4545/settext in your web browser and try it \n\n",
 		DEFAULT_STREAM,
 		DEFAULT_LOOP,
 		DEFAULT_RES
 		);
 	exit(1);
 }
-
-/// Debug info
 
 /**
  * COMMIT and DATE are compile time constants (see Makefile)

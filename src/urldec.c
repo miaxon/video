@@ -4,6 +4,12 @@
 #include "log.h"
 #include "err.h"
 
+/*
+ * This code from kore.io project with mini fix.
+ * See original https://github.com/jorisvink/kore/blob/master/src/http.c#L906 
+ */
+
+
 static long long
 url_strtonum(const char *str, int base, long long min, long long max, int *err) {
 	long long	l;

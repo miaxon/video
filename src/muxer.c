@@ -235,7 +235,7 @@ muxer_img_conv_init(void) {
 
 int
 muxer_pack_video(AVFrame *src, const char* subtitle) {
-	int ret = 0;
+	int ret = 0, draw_result = 0;
 	key_frame = src->key_frame;
 
 	if (( ret = sws_scale(ctx_sws_sub, (const uint8_t * const*) src->data, src->linesize, 0, mux->height, vframe_sub->data, vframe_sub->linesize)) < 0) {
@@ -247,7 +247,7 @@ muxer_pack_video(AVFrame *src, const char* subtitle) {
 	vframe_sub->width  = mux->width;
 	vframe_sub->height = ret;
 
-	sub_draw(vframe_sub, subtitle);
+	draw_result = sub_draw(vframe_sub, subtitle);
 
 	if (( ret = sws_scale(ctx_sws, (const uint8_t * const*) vframe_sub->data, vframe_sub->linesize, 0, mux->height, vframe->data, vframe->linesize)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "sws_scale", av_err2str(ret));
@@ -262,7 +262,7 @@ muxer_pack_video(AVFrame *src, const char* subtitle) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
 	}
 
-	return ret;
+	return draw_result;
 }
 
 int

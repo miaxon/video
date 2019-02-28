@@ -1,18 +1,4 @@
  
-
-apt-get build-dep ffmpeg
-
-./configure --enable-gpl --disable-stripping --enable-avresample --enable-avisynth --enable-gnutls --enable-ladspa --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libmp3lame --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-omx --enable-openal --enable-opengl --enable-sdl2 --enable-libdc1394 --enable-frei0r --enable-libopencv --enable-libx264 --enable-nonfree --enable-libfdk-aac 
-
- --enable-shared
-apt install libass5 libzmq5 libx264-148 libx265-95 libfdk-aac1 libopus0 libmp3lame0 libvpx4 nasm yasm
+apt install libass5 libzmq5 libx264-148 libx265-95 libfdk-aac1 libopus0 libmp3lame0 libvpx4
 dpkg -i ffmpeg_4.1-1_amd64.deb
 
-sudo ln -s /usr/lib/x86_64-linux-gnu/libzmq.so.5.1.1 /usr/lib/libzmq.so.5.1.3
-
-
-ffmpeg -re -i sample.mp4 -c:v libx264 -preset veryfast -maxrate 3000k -bufsize 6000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f mpegts udp://192.168.255.251:1234
-ffmpeg -i ../video/assets/StrideTest.mp4 -f mp4 -vcodec libx264 -aspect 16:9 -pix_fmt yuv420p -b 6000k -vf "pad=1920:1080:218:0:black,yadif=0:-1:1" /root/www.avi
-
-https://help.ubuntu.ru/wiki/ffmpeg
-https://github.com/zimbatm/ffmpeg-static

@@ -2,12 +2,12 @@
 #include <unistd.h>
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
-#include <ctype.h>
 
 
 #include "net.h"
 #include "log.h"
 #include "err.h"
+#include "urldec.h"
 
 #define SUB_SIZE 256
 
@@ -15,13 +15,16 @@ static char sub[SUB_SIZE];
 static char txt[SUB_SIZE]; // static pointer to currenet subtitle text;
 static char *url;
 static char *res;
+static pthread_mutex_t lock;
+
 static unsigned const char *html = (unsigned char*) \
 "<!DOCTYPE html>"\
 "<html>"\
 "<body>"\
 "<h4>Set subtitle on video:</h4>"\
-"<form action='/subtitle'>"\
-"<p>Note: input text is 256 characher's line, use '\\N' as newline delimiter.</p>"\
+"<form accept-charset='utf-8' action='/subtitle'>"\
+"<p>Note 1: input text is 256 characher's line.</p>"\
+"<p>Note 2: use '\\N' as newline delimiter.</p>"\
 "Text:<br>"\
 "<input type='text' name='text'>"\
 "<br><br>"\
@@ -31,100 +34,16 @@ static unsigned const char *html = (unsigned char*) \
 "</html>"\
 ;
 
-
 typedef void * (* entry_t)(void *) ;
-static void net_thread(void *param);
-static int  net_client(AVIOContext *client);
-static void net_set_subtitle(const char* text);
-static pthread_mutex_t lock;
-
-long long
-kore_strtonum(const char *str, int base, long long min, long long max, int *err) {
-	long long	l;
-	char		*ep;
-
-	if (min > max) {
-		*err = -1;
-		return (0);
-	}
-
-	errno = 0;
-	l = strtoll(str, &ep, base);
-	if (errno != 0 || str == ep || *ep != '\0') {
-		*err = -1;
-		return (0);
-	}
-
-	if (l < min) {
-		*err = -1;
-		return (0);
-	}
-
-	if (l > max) {
-		*err = -1;
-		return (0);
-	}
-
-	*err = -1;
-	return (l);
-}
-
-int
-http_argument_urldecode(char *arg) {
-	u_int8_t	v;
-	int		err;
-	size_t		len;
-	char		*p, *in, h[5];
-
-	p = arg;
-	in = arg;
-	len = strlen(arg);
-
-	while (*p != '\0' && p < (arg + len)) {
-		if (*p == '+')
-			*p = ' ';
-		if (*p != '%') {
-			*in++ = *p++;
-			continue;
-		}
-
-		if ((p + 2) >= (arg + len)) {
-			ERROR("overflow in '%s'", arg);
-			return -1;
-		}
-
-		if (!isxdigit(*(p + 1)) || !isxdigit(*(p + 2))) {
-			*in++ = *p++;
-			continue;
-		}
-
-		h[0] = '0';
-		h[1] = 'x';
-		h[2] = *(p + 1);
-		h[3] = *(p + 2);
-		h[4] = '\0';
-
-		v = kore_strtonum(h, 16, 0x0, 0xff, &err);
-		//if (err != 0)
-		//	return (err);
-
-		//if (v <= 0x1f || v == 0x7f || (v >= 0x80 && v <= 0x9f))
-		//	return (KORE_RESULT_ERROR);
-
-		*in++ = (char) v;
-		p += 3;
-	}
-
-	*in = '\0';
-	return 0;
-}
+static void  net_thread(void *param);
+static int   net_client(AVIOContext *client);
+static void  net_set_subtitle(const char* text);
 
 int
 net_init(char *t, char *u, char *r) {
 	int ret = 0;
 	pthread_t th;
 	pthread_attr_t attr;
-
 	memset(sub, 0, SUB_SIZE);
 	strncpy(sub, t, SUB_SIZE - 1);
 	url  = u;
@@ -161,8 +80,8 @@ net_set_subtitle(const char* text) {
 
 	memset(sub, 0, SUB_SIZE);
 	strncpy(sub, text, SUB_SIZE - 1);
-	INFO("HTTP:subtitle %s", sub);
-	
+	INFO("HTTP:set new subtitle text '%s'", sub);
+
 	if (pthread_mutex_unlock(&lock) != 0)
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_unlock");
 }
@@ -195,8 +114,8 @@ net_thread(void *param) {
 	if ((ret = avio_open2(&server, url, AVIO_FLAG_WRITE, NULL, &opts)) < 0) {
 		ERR_EXIT("HTTP:'%s' failed: %s", "avio_open2", av_err2str(ret));
 	}
-	INFO("NET: start http listen: %s", url);
-	for (;;) {
+	INFO("HTTP: start http listen: %s", url);
+	for (; ; ) {
 		if ((ret = avio_accept(server, &client)) < 0) {
 			ERROR("HTTP:'%s' failed: %s", "avio_accept", av_err2str(ret));
 			continue;
@@ -205,7 +124,7 @@ net_thread(void *param) {
 		if (ret < 0)
 			break;
 	}
-	INFO("NET: stop http listen: %s", url);
+	INFO("HTTP: stop http listen: %s", url);
 	pthread_mutex_destroy(&lock);
 	avio_close(server);
 }
@@ -222,17 +141,26 @@ net_client(AVIOContext *client) {
 		av_freep(&resource);
 	}
 	if (ret < 0) {
-		ERR_EXIT("HTTP:'%s' failed: %s", "avio_handshake", av_err2str(ret));
+		ERROR("HTTP:'%s' failed: %s", "avio_handshake", av_err2str(ret));
+		return 0;
 	}
 
-
-	//INFO("HTTP:resourсe %s", resource);
-	http_argument_urldecode(resource);
-	//INFO("HTTP:resourсe %s", resource);
-	
 	if (resource && resource[0] == '/' && !strncmp((resource + 1), res, strlen(res))) {
+
 		reply_code = 200;
-		net_set_subtitle( strstr(resource, "=") + 1);	
+
+		if (url_decode(resource) == 0) {
+			char *txt = strstr(resource, "?text=");
+			if (txt) {
+				net_set_subtitle(strstr(resource, "=") + 1);
+			} else {
+				ERROR("Invalid parameters string '%s'", resource);
+				reply_code = AVERROR_HTTP_BAD_REQUEST;
+			}
+		} else {
+			ERROR("Failed to decode '%s'", resource);
+			reply_code = AVERROR_HTTP_BAD_REQUEST;
+		}
 	} else {
 		reply_code = AVERROR_HTTP_NOT_FOUND;
 	}

@@ -46,7 +46,7 @@ demuxer_new (const char* name, int audio) {
 	}
 	
 	if ((ret = avformat_open_input(&ctx_f, name, NULL, NULL)) != 0) {
-		ERR_EXIT("DEMUXER:'%s' failed: %s", "avformat_open_input", av_err2str(ret));
+		ERR_EXIT("DEMUXER:'%s' failed: %s '%s'", "avformat_open_input", av_err2str(ret), name);
 	}
 
 	if (ctx_f == NULL) {

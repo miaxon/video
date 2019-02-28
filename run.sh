@@ -9,4 +9,4 @@ fi
 #make clean
 #make
 cp -f $PROG $BIN
-cd $BIN && ./vlt -t 'Hello, World! Я здесь.' -a
+cd $BIN && ./vlt -t 'Hello, World! Я здесь.' -u http://127.0.0.1:4545

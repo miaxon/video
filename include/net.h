@@ -6,10 +6,10 @@ extern "C" {
 #endif
 #include "vlt.h"
 
-	int net_init(char *title, int port, char *url);
+	int net_init(char *title, char *url, char *resource);
 	
 	char*
-	net_get_title(void);
+	net_subtitle(void);
 
 #ifdef __cplusplus
 }

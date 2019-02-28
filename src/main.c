@@ -16,17 +16,16 @@
 #define DEFAULT_FILE    "../assets/sample.mp4"
 //#define DEFAULT_FILE    "../assets/sample.avi"
 
-#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
-//#define DEFAULT_STREAM   "udp://127.0.0.1:1234?pkt_size=1316"
+//#define DEFAULT_STREAM   "udp://127.0.0.1:1234"
+#define DEFAULT_STREAM   "udp://127.0.0.1:1234?pkt_size=1316"
 //#define DEFAULT_STREAM   "udp://224.1.1.1:1234?pkt_size=1316"
 //#define DEFAULT_STREAM   "udp://10.0.224.26:1234"
 
-#define DEFAULT_PORT      4535
-#define DEFAULT_URL       "/subtitle"
+#define DEFAULT_RES       "subtitle"
+#define DEFAULT_URL       "http://0.0.0.0:4545"
 #define DEFAULT_LOOP      0      // infinitely loop
 #define DEFAULT_DEBUG     0
 #define DEFAULT_AUDIO     0
-#define DEFAULT_NET       1
 
 
 _Noreturn static void print_usage (void);
@@ -48,22 +47,20 @@ main (int argc, char **argv) {
 		.title  = NULL,
 		.url    = NULL,
 		.loop   = DEFAULT_LOOP,
-		.port   = DEFAULT_PORT,
 		.debug  = DEFAULT_DEBUG,
 		.audio  = DEFAULT_AUDIO,
-		.net    = DEFAULT_NET
+		.res    = NULL
 	};
 
 	int longindex, c;
-	const char *optstring = "f:s:l:p:u:t:andvh";
+	const char *optstring = "f:s:l:p:u:t:n:advh";
 	const struct option longopts[] = {
 		{ "file",    required_argument, NULL, 'f'},
 		{ "stream",  required_argument, NULL, 's'},
 		{ "loop",    required_argument, NULL, 'l'},
-		{ "port",    required_argument, NULL, 'p'},
-		{ "url",     required_argument, NULL, 'u'},
+		{ "res",     required_argument, NULL, 'r'},
 		{ "title",   required_argument, NULL, 't'},
-		{ "net",     no_argument, NULL, 'n'},
+		{ "url",     required_argument, NULL, 'u'},
 		{ "audio",   no_argument, NULL, 'a'},
 		{ "debug",   no_argument, NULL, 'd'},
 		{ "version", no_argument, NULL, 'v'},
@@ -79,22 +76,19 @@ main (int argc, char **argv) {
 			case 'f':
 				param.file = optarg;
 				break;
-			case 'u':
-				param.url = optarg;
+			case 'r':
+				param.res = optarg;
 				break;
 			case 't':
 				param.title = optarg;
-				break;
-			case 'p':
-				param.port = parse_int(optarg);
-				break;
+				break;			
 			case 'l':
 				param.loop = parse_int(optarg);
 				break;
 			case 'a':
 				param.audio = 1;
-			case 'n':
-				param.net = 1;
+			case 'u':
+				param.url = optarg;
 				break;
 			case 'd':
 				param.debug = 1;
@@ -113,8 +107,7 @@ main (int argc, char **argv) {
 
 	check_param(&param);
 	int result = vlt_start(&param);
-	//result = vlt_start(&param);
-	return !result;
+	return result;
 }
 
 /// Check params
@@ -128,37 +121,27 @@ static void check_param (param_t *param) {
 		param->stream = DEFAULT_STREAM;
 	}
 
-	if (!param->url) {
-		param->url = DEFAULT_URL;
+	if (!param->res) {
+		param->res = DEFAULT_RES;
 	}
-
-	if (param->port < 1024 || param->port > 65535) {
-		param->port = DEFAULT_PORT;
-	}
-
-	if (param->loop < 0) {
-		ERR_EXIT("%s", "loop value must be positive (default)");
-	}
-
+	
 	INFO(
 		"\nusing params:\n"
 		"\tfile:      '%s'\n"
 		"\tstream:    '%s'\n"
-		"\thttp port: '%d'\n"
 		"\tloop:      '%d'%s\n"
-		"\turl:       '%s'\n"
+		"\thttp:       '%s'\n"			
+		"\tresource:  '%s'\n"
 		"\tsubtitle:  '%s'\n"
 		"\taudio:      %s\n"
-		"\tnet:        %s\n"
 		"\tdebug:      %s\n",
 		param->file,
 		param->stream,
-		param->port,
 		param->loop, param->loop ? "" : "(Infinitely)",
-		param->url,
+		param->url ? param->url : "No",
+		param->res,
 		param->title,
 		param->audio ? "Yes" : "No",
-		param->net ? "Yes" : "No",
 		param->debug ? "Yes" : "No"
 		);
 }
@@ -180,15 +163,20 @@ _Noreturn static void
 print_usage (void) {
 	printf(
 		"Usage: vlt [slputfvh] [OPTION]\n"
-		"\t-s, --stream\t stream on udp://<ip>:<port> (default '"DEFAULT_STREAM"')\n"
-		"\t-l, --loop\t looping stream, 0 - infinitely looping (default 0)\n"
-		"\t-p, --port\t http port to listen (default '4535')\n"
-		"\t-u, --url\t url to listen(default '"DEFAULT_URL"'\n"
+		"\t-s, --stream\t stream: udp://<ip>:<port> (default '%s')\n"
+		"\t-l, --loop\t looping stream, 0 - infinitely loop (default %d)\n"		
+		"\t-r, --url\t http url resource(default '%s'\n"
 		"\t-t, --title\t initial title (default empty)\n"
-		"\t-f, --file\t video file for streaming( default '"DEFAULT_FILE"')\n"
+		"\t-f, --file\t video file for streaming( default '%s')\n"
+		"\t-a, --audio\t try stream audio ( default off)\n"
+		"\t-u, --net\t enable http listen ( default off)\n"
 		"\t-v, --version\t print version and exit\n"
 		"\t-h, --help\t print this help and exit\n\n"
-		"\texample: vlt -p 1333 -u /settext -s udp://224.1.1.3:1234 -f /home/user/my_video.mp4\n\n"
+		"\texample: vlt -n http://127.0.0.1:4545 -u /settext -s udp://224.1.1.3:1234 -f /home/user/my_video.mp4 -t 'Default subtitle' -a\n\n",
+		 DEFAULT_STREAM,
+		 DEFAULT_LOOP,
+		 DEFAULT_URL,
+		 DEFAULT_FILE
 		);
 	exit(1);
 }

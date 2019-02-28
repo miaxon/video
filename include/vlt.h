@@ -10,12 +10,11 @@ extern "C" {
         char *file;
         char *stream;
         char *title;
-        char *url;
-        int port;
+        char *url;		
+        char *res;
         int loop;
         int debug;
         int audio;
-        int net;
     } param_t;
 
     int

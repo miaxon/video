@@ -125,6 +125,7 @@ demuxer_get_video_stream() {
 
 void
 demuxer_free (void) {
+	av_freep(mux->pa);
 	avcodec_close(ctx_cv);
 	avcodec_close(ctx_ca);
 	av_frame_free(&vframe);

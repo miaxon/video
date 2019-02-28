@@ -7,7 +7,7 @@ inc         := ../include
 inc_flags   := -I$(inc)
 
 LINKFLAGS   := 
-LDFLAGS     := 
+LDFLAGS     :=  -lpthread
 #LDFLAGS     := -fsanitize=address
 
 CFLAGS   := -std=gnu11 -O2 -fPIC -Wall -g -Wpedantic

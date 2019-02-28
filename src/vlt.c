@@ -32,7 +32,7 @@ vlt_loop() {
 				demuxer_unpack_video();
 				while ((ret = demuxer_decode_video()) >= 0) { // transcode frame
 
-					muxer_pack_video(demuxer_get_frame_video(), net_get_title());
+					muxer_pack_video(demuxer_get_frame_video(), net_subtitle());
 
 					while ((ret = muxer_encode_video()) >= 0) {
 						muxer_write_video();
@@ -58,11 +58,14 @@ vlt_start (param_t *param) {
 	if (param->debug)
 		av_log_set_level(AV_LOG_DEBUG);
 
+	if (param->url)
+		net_init(param->title, param->url, param->res);
+	
+	//return 0;
 	demuxer_t *inp = NULL;
 	inp = demuxer_new(param->file, param->audio);
-	OK
 	muxer_new(param->stream, inp);
-	net_init(param->title, param->port, param->url);
+	
 
 	if (loop == 0) {
 		for (; ; ) {

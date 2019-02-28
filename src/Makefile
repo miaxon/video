@@ -22,7 +22,7 @@ LIB_ASSLDFLAGS := $(shell pkg-config --libs libass)
 all: $(prog)
 
 $(prog): $(obj)
-	$(CC) -o $@ $^ $(LINKFLAGS) $(LDFLAGS) $(LIB_AVLDFLAGS) $(LIB_ASSLDFLAGS)
+	$(CC) -o $@ $^ $(LINKFLAGS) $(LDFLAGS) $(LIB_AVLDFLAGS) $(LIB_ASSLDFLAGS) -lcurl
 
 %.o: %.c
 	$(CC) -o $@ -c $< $(CFLAGS) $(GIT_FLAGS) $(inc_flags) $(LIB_AVCFLAGS) -MMD

@@ -61,7 +61,7 @@ vlt_start (param_t *param) {
 	if (param->url)
 		net_init(param->title, param->url, param->res);
 	
-	//return 0;
+	return 0;
 	demuxer_t *inp = NULL;
 	inp = demuxer_new(param->file, param->audio);
 	muxer_new(param->stream, inp);

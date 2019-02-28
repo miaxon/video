@@ -3,6 +3,8 @@
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
 #include <ctype.h>
+#include <curl/curl.h>
+#include <iconv.h>
 
 
 #include "net.h"
@@ -18,6 +20,8 @@ static char *res;
 static unsigned const char *html = (unsigned char*) \
 "<!DOCTYPE html>"\
 "<html>"\
+"<meta http-equiv='content-language' content='ru'>"\
+"<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>"\
 "<body>"\
 "<h4>Set subtitle on video:</h4>"\
 "<form action='/subtitle'>"\
@@ -37,6 +41,7 @@ static void net_thread(void *param);
 static int  net_client(AVIOContext *client);
 static void net_set_subtitle(const char* text);
 static pthread_mutex_t lock;
+static CURL *curl;
 
 long long
 kore_strtonum(const char *str, int base, long long min, long long max, int *err) {
@@ -71,51 +76,11 @@ kore_strtonum(const char *str, int base, long long min, long long max, int *err)
 
 int
 http_argument_urldecode(char *arg) {
-	u_int8_t	v;
-	int		err;
-	size_t		len;
-	char		*p, *in, h[5];
-
-	p = arg;
-	in = arg;
-	len = strlen(arg);
-
-	while (*p != '\0' && p < (arg + len)) {
-		if (*p == '+')
-			*p = ' ';
-		if (*p != '%') {
-			*in++ = *p++;
-			continue;
-		}
-
-		if ((p + 2) >= (arg + len)) {
-			ERROR("overflow in '%s'", arg);
-			return -1;
-		}
-
-		if (!isxdigit(*(p + 1)) || !isxdigit(*(p + 2))) {
-			*in++ = *p++;
-			continue;
-		}
-
-		h[0] = '0';
-		h[1] = 'x';
-		h[2] = *(p + 1);
-		h[3] = *(p + 2);
-		h[4] = '\0';
-
-		v = kore_strtonum(h, 16, 0x0, 0xff, &err);
-		//if (err != 0)
-		//	return (err);
-
-		//if (v <= 0x1f || v == 0x7f || (v >= 0x80 && v <= 0x9f))
-		//	return (KORE_RESULT_ERROR);
-
-		*in++ = (char) v;
-		p += 3;
-	}
-
-	*in = '\0';
+	int len =strlen(arg);
+	int size;
+	char *s = curl_easy_unescape( curl , arg , len , &size );
+	INFO("URL %s", s);
+	iconv_t cd = iconv_open("ISO_8859-1", "UTF-8");
 	return 0;
 }
 
@@ -130,14 +95,16 @@ net_init(char *t, char *u, char *r) {
 	url  = u;
 	res  = r;
 	entry_t entry = (entry_t) net_thread;
+	
+	curl = curl_easy_init();
 
 	if ((ret = pthread_attr_init(&attr)) != 0) {
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_attr_init");
 	}
 
-	if ((ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) != 0) {
-		ERR_SYS("HTTP:'%s' failed: %s", "pthread_attr_setdetachstate");
-	}
+	//if ((ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) != 0) {
+	//	ERR_SYS("HTTP:'%s' failed: %s", "pthread_attr_setdetachstate");
+	//}
 
 	if ((ret = pthread_mutex_init(&lock, NULL)) != 0) {
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_init");
@@ -150,7 +117,7 @@ net_init(char *t, char *u, char *r) {
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_attr_destroy");
 	}
 
-	//pthread_join(th, NULL);
+	pthread_join(th, NULL);
 	return 0;
 }
 
@@ -183,7 +150,7 @@ net_subtitle(void) {
 
 static void
 net_thread(void *param) {
-	//av_log_set_level(AV_LOG_TRACE);
+	av_log_set_level(AV_LOG_TRACE);
 	int ret = 0;
 	AVDictionary *opts = NULL;
 	AVIOContext *client = NULL, *server = NULL;
@@ -226,9 +193,9 @@ net_client(AVIOContext *client) {
 	}
 
 
-	//INFO("HTTP:resourсe %s", resource);
+	INFO("HTTP:resourсe %s", resource);
 	http_argument_urldecode(resource);
-	//INFO("HTTP:resourсe %s", resource);
+	INFO("HTTP:resourсe %s", resource);
 	
 	if (resource && resource[0] == '/' && !strncmp((resource + 1), res, strlen(res))) {
 		reply_code = 200;

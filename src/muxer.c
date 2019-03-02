@@ -159,8 +159,9 @@ muxer_add_video_stream() {
 
 void
 muxer_free (void) {
+	sub_destroy();
 	av_packet_unref(packet);
-	av_free(buf);
+	av_freep(buf);
 	av_frame_free(&vframe);
 	av_free(buf_sub);
 	av_frame_free(&vframe_sub);
@@ -261,7 +262,7 @@ muxer_pack_video(AVFrame *src, const char* subtitle) {
 	if ((ret = avcodec_send_frame(ctx_cv, vframe)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "avcodec_send_packet", av_err2str(ret));
 	}
-
+	av_frame_free(&src);
 	return draw_result;
 }
 
@@ -276,10 +277,11 @@ muxer_write_audio(AVPacket *p) {
 		return;
 	int ret = 0;
 	p->stream_index = sia;
-	av_packet_rescale_ts(p, atb, sa->time_base);	
+	av_packet_rescale_ts(p, atb, sa->time_base);
 	if ((ret = av_interleaved_write_frame(ctx_f, p)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 	}
+	av_packet_unref(p);
 }
 
 void
@@ -298,6 +300,9 @@ muxer_write_video(void) {
 	if ((ret = av_interleaved_write_frame(ctx_f, packet)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 	}
+	av_packet_unref(packet);
+	av_frame_free(&vframe);
+	av_frame_free(&vframe_sub);
 }
 
 void
@@ -306,4 +311,8 @@ muxer_finish(void) {
 	if ((ret = av_write_trailer(ctx_f)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "av_write_trailer", av_err2str(ret));
 	}
+	if (sv)
+		av_free(sv);
+	if (sa)
+		av_free(sa);
 }

@@ -1,0 +1,1 @@
+valgrind --undef-value-errors=yes ./vlt -t 'Hello, World!' -u http://127.0.0.1:4545 -a -f ../assets/sample.mp4 -l 1

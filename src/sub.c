@@ -160,6 +160,8 @@ sub_blend(AVFrame *frame, ASS_Image *img) {
 
 void
 sub_destroy(void) {
-	ass_renderer_done(rnd);
-	ass_library_done(lib);
+	if (rnd)
+		ass_renderer_done(rnd);
+	if (lib)
+		ass_library_done(lib);
 }

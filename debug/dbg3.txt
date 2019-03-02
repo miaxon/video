@@ -1,0 +1,684 @@
+==00:00:00:00.000 9070== Memcheck, a memory error detector
+==00:00:00:00.000 9070== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==00:00:00:00.000 9070== Using Valgrind-3.12.0.SVN and LibVEX; rerun with -h for copyright info
+==00:00:00:00.000 9070== Command: ./vlt -t Hello,\ World! -u http://127.0.0.1:4545 -a -f ../assets/sample.avi -l 1
+==00:00:00:00.000 9070== Parent PID: 6018
+==00:00:00:00.000 9070== 
+--00:00:00:00.540 9070-- WARNING: Serious error when reading debug info
+--00:00:00:00.540 9070-- When reading debug info from /home/alexcon/src/video/bin/vlt:
+--00:00:00:00.540 9070-- get_Form_contents: DW_FORM_strp points outside .debug_str
+==00:00:00:05.660 9070== Invalid read of size 16
+==00:00:00:05.661 9070==    at 0xCD2064: ??? (in /home/alexcon/src/video/bin/vlt)
+==00:00:00:05.661 9070==    by 0xCE24D2: lum_convert (hscale.c:108)
+==00:00:00:05.661 9070==    by 0xC7D26F: swscale (swscale.c:466)
+==00:00:00:05.661 9070==    by 0xC7E6EC: sws_scale (swscale.c:986)
+==00:00:00:05.661 9070==    by 0x22121C: muxer_pack_video (muxer.c:255)
+==00:00:00:05.661 9070==    by 0x220107: vlt_loop (vlt.c:36)
+==00:00:00:05.661 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:00:05.661 9070==    by 0x21E47C: main (main.c:103)
+==00:00:00:05.661 9070==  Address 0x25078334 is 184,308 bytes inside a block of size 184,320 alloc'd
+==00:00:00:05.661 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:00:05.661 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:00:05.661 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:00:05.661 9070==    by 0xCF9AED: av_mallocz (mem.c:238)
+==00:00:00:05.661 9070==    by 0x220A89: muxer_img_conv_init (muxer.c:204)
+==00:00:00:05.661 9070==    by 0x220A89: muxer_new (muxer.c:87)
+==00:00:00:05.661 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:00:05.661 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:00:05.661 9070==    by 0x21E47C: main (main.c:103)
+==00:00:00:05.661 9070== 
+==00:00:02:15.814 9070== 
+==00:00:02:15.814 9070== HEAP SUMMARY:
+==00:00:02:15.814 9070==     in use at exit: 944,963 bytes in 818 blocks
+==00:00:02:15.814 9070==   total heap usage: 28,624 allocs, 27,806 frees, 49,748,979 bytes allocated
+==00:00:02:15.814 9070== 
+==00:00:02:15.906 9070== 3 bytes in 1 blocks are still reachable in loss record 1 of 48
+==00:00:02:15.906 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.906 9070==    by 0x1292B3B9: strdup (strdup.c:42)
+==00:00:02:15.906 9070==    by 0xC30DE70: FcStrSetAdd (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.906 9070==    by 0xC30DFE2: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.906 9070==    by 0xC2FD2EA: FcGetDefaultLangs (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.906 9070==    by 0xC2F915C: FcConfigSubstituteWithPat (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.906 9070==    by 0xBC4D1C9: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC3906C: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC39AED: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC371D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC375D0: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC47691: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070== 
+==00:00:02:15.906 9070== 3 bytes in 1 blocks are definitely lost in loss record 2 of 48
+==00:00:02:15.906 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.906 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.906 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.906 9070==    by 0xCFB5D0: av_opt_set_defaults2 (opt.c:217)
+==00:00:02:15.906 9070==    by 0x22BDCB: avformat_get_context_defaults (options.c:141)
+==00:00:02:15.906 9070==    by 0x22BDCB: avformat_alloc_context (options.c:149)
+==00:00:02:15.906 9070==    by 0x228DDC: avformat_alloc_output_context2 (mux.c:151)
+==00:00:02:15.906 9070==    by 0x220864: muxer_new (muxer.c:69)
+==00:00:02:15.906 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.906 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.906 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.906 9070== 
+==00:00:02:15.906 9070== 4 bytes in 1 blocks are still reachable in loss record 3 of 48
+==00:00:02:15.906 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.906 9070==    by 0x1B554772: ??? (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.906 9070==    by 0x1B554CEB: g_private_get (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.906 9070==    by 0x1B52D31C: g_slice_alloc (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.906 9070==    by 0x1B4FDCDD: g_hash_table_new_full (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.906 9070==    by 0x1B51FE6A: ??? (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.906 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.906 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.906 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.906 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.906 9070==    by 0x9: ???
+==00:00:02:15.906 9070==    by 0xFFF00019A: ???
+==00:00:02:15.906 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.906 9070== 
+==00:00:02:15.906 9070== 4 bytes in 1 blocks are still reachable in loss record 4 of 48
+==00:00:02:15.906 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.906 9070==    by 0x1292B3B9: strdup (strdup.c:42)
+==00:00:02:15.906 9070==    by 0xC2FD513: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.906 9070==    by 0xC2F91EC: FcConfigSubstituteWithPat (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.906 9070==    by 0xBC4D1C9: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC3906C: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC39AED: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC371D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC375D0: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC47691: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC3D3D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070==    by 0xBC3DB09: ass_render_frame (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.906 9070== 
+==00:00:02:15.906 9070== 7 bytes in 1 blocks are indirectly lost in loss record 5 of 48
+==00:00:02:15.906 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.906 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.906 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.906 9070==    by 0xCFB5D0: av_opt_set_defaults2 (opt.c:217)
+==00:00:02:15.906 9070==    by 0x61A1BD: init_context_defaults (options.c:134)
+==00:00:02:15.906 9070==    by 0x61A2E5: avcodec_alloc_context3 (options.c:163)
+==00:00:02:15.906 9070==    by 0x2391DF: avformat_new_stream (utils.c:4482)
+==00:00:02:15.906 9070==    by 0x2208D6: muxer_add_video_stream (muxer.c:125)
+==00:00:02:15.906 9070==    by 0x2208D6: muxer_new (muxer.c:84)
+==00:00:02:15.906 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.906 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.906 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.906 9070== 
+==00:00:02:15.906 9070== 8 bytes in 1 blocks are still reachable in loss record 6 of 48
+==00:00:02:15.906 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.906 9070==    by 0x19BC3678: ??? (in /usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0)
+==00:00:02:15.906 9070==    by 0x19BD2857: ??? (in /usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0)
+==00:00:02:15.906 9070==    by 0x19BC1CCC: ??? (in /usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0)
+==00:00:02:15.906 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.906 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.906 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.906 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.906 9070==    by 0x9: ???
+==00:00:02:15.907 9070==    by 0xFFF00019A: ???
+==00:00:02:15.907 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.907 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.907 9070==    by 0xFFF0001B1: ???
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 8 bytes in 1 blocks are indirectly lost in loss record 7 of 48
+==00:00:02:15.907 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.907 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.907 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.907 9070==    by 0xCE9937: av_dict_set (dict.c:83)
+==00:00:02:15.907 9070==    by 0x22900F: init_muxer (mux.c:403)
+==00:00:02:15.907 9070==    by 0x22900F: avformat_init_output (mux.c:492)
+==00:00:02:15.907 9070==    by 0x229A0C: avformat_write_header (mux.c:515)
+==00:00:02:15.907 9070==    by 0x220BB0: muxer_new (muxer.c:90)
+==00:00:02:15.907 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.907 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.907 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 8 bytes in 1 blocks are definitely lost in loss record 8 of 48
+==00:00:02:15.907 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.907 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.907 9070==    by 0x239183: avformat_new_stream (utils.c:4466)
+==00:00:02:15.907 9070==    by 0x2208D6: muxer_add_video_stream (muxer.c:125)
+==00:00:02:15.907 9070==    by 0x2208D6: muxer_new (muxer.c:84)
+==00:00:02:15.907 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.907 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.907 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 14 bytes in 1 blocks are indirectly lost in loss record 9 of 48
+==00:00:02:15.907 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.907 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.907 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.907 9070==    by 0xCE9920: av_dict_set (dict.c:87)
+==00:00:02:15.907 9070==    by 0x22900F: init_muxer (mux.c:403)
+==00:00:02:15.907 9070==    by 0x22900F: avformat_init_output (mux.c:492)
+==00:00:02:15.907 9070==    by 0x229A0C: avformat_write_header (mux.c:515)
+==00:00:02:15.907 9070==    by 0x220BB0: muxer_new (muxer.c:90)
+==00:00:02:15.907 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.907 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.907 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 16 bytes in 1 blocks are still reachable in loss record 10 of 48
+==00:00:02:15.907 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.907 9070==    by 0xC30DDA1: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.907 9070==    by 0xC30DE85: FcStrSetAdd (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.907 9070==    by 0xC30DFE2: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.907 9070==    by 0xC2FD2EA: FcGetDefaultLangs (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.907 9070==    by 0xC2F915C: FcConfigSubstituteWithPat (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.907 9070==    by 0xBC4D1C9: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC3906C: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC39AED: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC371D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC375D0: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC47691: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 16 bytes in 1 blocks are indirectly lost in loss record 11 of 48
+==00:00:02:15.907 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.907 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.907 9070==    by 0xCE9A79: av_dict_set (dict.c:106)
+==00:00:02:15.907 9070==    by 0x22900F: init_muxer (mux.c:403)
+==00:00:02:15.907 9070==    by 0x22900F: avformat_init_output (mux.c:492)
+==00:00:02:15.907 9070==    by 0x229A0C: avformat_write_header (mux.c:515)
+==00:00:02:15.907 9070==    by 0x220BB0: muxer_new (muxer.c:90)
+==00:00:02:15.907 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.907 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.907 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 21 bytes in 1 blocks are definitely lost in loss record 12 of 48
+==00:00:02:15.907 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.907 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.907 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.907 9070==    by 0x228E4A: avformat_alloc_output_context2 (mux.c:195)
+==00:00:02:15.907 9070==    by 0x220864: muxer_new (muxer.c:69)
+==00:00:02:15.907 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.907 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.907 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 22 bytes in 1 blocks are still reachable in loss record 13 of 48
+==00:00:02:15.907 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.907 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.907 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.907 9070==    by 0x28D46C: http_open (http.c:534)
+==00:00:02:15.907 9070==    by 0x25277C: ffurl_connect (avio.c:209)
+==00:00:02:15.907 9070==    by 0x252B66: ffurl_open_whitelist (avio.c:345)
+==00:00:02:15.907 9070==    by 0x224B58: ffio_open_whitelist (aviobuf.c:1167)
+==00:00:02:15.907 9070==    by 0x224BAD: avio_open2 (aviobuf.c:1181)
+==00:00:02:15.907 9070==    by 0x21E65B: net_thread (net.c:152)
+==00:00:02:15.907 9070==    by 0x4E3F4A3: start_thread (pthread_create.c:456)
+==00:00:02:15.907 9070==    by 0x12993D0E: clone (clone.S:97)
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 24 bytes in 1 blocks are still reachable in loss record 14 of 48
+==00:00:02:15.907 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.907 9070==    by 0xC30DC7D: FcStrSetCreate (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.907 9070==    by 0xC2FD32F: FcGetDefaultLangs (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.907 9070==    by 0xC2F915C: FcConfigSubstituteWithPat (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.907 9070==    by 0xBC4D1C9: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC3906C: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC39AED: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC371D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC375D0: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC47691: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC3D3D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070==    by 0xBC3DB09: ass_render_frame (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 32 bytes in 1 blocks are still reachable in loss record 15 of 48
+==00:00:02:15.907 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.907 9070==    by 0x1B514E60: g_malloc0 (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.907 9070==    by 0x1B4FDD44: g_hash_table_new_full (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.907 9070==    by 0x1B51FE6A: ??? (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.907 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.907 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.907 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.907 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.907 9070==    by 0x9: ???
+==00:00:02:15.907 9070==    by 0xFFF00019A: ???
+==00:00:02:15.907 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.907 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.907 9070==    by 0xFFF0001B1: ???
+==00:00:02:15.907 9070== 
+==00:00:02:15.907 9070== 32 bytes in 1 blocks are still reachable in loss record 16 of 48
+==00:00:02:15.907 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.908 9070==    by 0xC0EA60E: _dlerror_run (dlerror.c:141)
+==00:00:02:15.908 9070==    by 0xC0EA067: dlsym (dlsym.c:70)
+==00:00:02:15.908 9070==    by 0x1423612E: ??? (in /usr/lib/x86_64-linux-gnu/libGLdispatch.so.0)
+==00:00:02:15.908 9070==    by 0x142368B8: ??? (in /usr/lib/x86_64-linux-gnu/libGLdispatch.so.0)
+==00:00:02:15.908 9070==    by 0x400F759: call_init.part.0 (dl-init.c:58)
+==00:00:02:15.908 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.908 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.908 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.908 9070==    by 0x9: ???
+==00:00:02:15.908 9070==    by 0xFFF00019A: ???
+==00:00:02:15.908 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.908 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.908 9070== 
+==00:00:02:15.908 9070== 38 bytes in 2 blocks are still reachable in loss record 17 of 48
+==00:00:02:15.908 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.908 9070==    by 0x1292B3B9: strdup (strdup.c:42)
+==00:00:02:15.908 9070==    by 0xC30960C: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC3097BC: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC311377: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0x17960B5B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x1796147B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x17962D80: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x179634B4: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x1796581E: XML_ParseBuffer (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0xC30FB9A: FcConfigParseAndLoad (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC30FEB6: FcConfigParseAndLoad (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070== 
+==00:00:02:15.908 9070== 40 bytes in 1 blocks are still reachable in loss record 18 of 48
+==00:00:02:15.908 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.908 9070==    by 0x1292B3B9: strdup (strdup.c:42)
+==00:00:02:15.908 9070==    by 0xC31158B: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0x17960B5B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x1796147B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x17962D80: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x179634B4: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x1796581E: XML_ParseBuffer (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0xC30FB9A: FcConfigParseAndLoad (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC30FEB6: FcConfigParseAndLoad (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC310947: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0x17960B5B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070== 
+==00:00:02:15.908 9070== 40 bytes in 1 blocks are still reachable in loss record 19 of 48
+==00:00:02:15.908 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.908 9070==    by 0xC2F4A09: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC2F54E6: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC2F59E8: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC2F5137: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC2F5B36: FcDirCacheLoad (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC2FE241: FcDirCacheRead (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC2F9B37: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC2F9BFA: FcConfigBuildFonts (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xBC4D8E6: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.908 9070==    by 0xBC39E93: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.908 9070==    by 0xBC4B25C: ass_set_fonts (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.908 9070== 
+==00:00:02:15.908 9070== 44 bytes in 1 blocks are still reachable in loss record 20 of 48
+==00:00:02:15.908 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.908 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.908 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.908 9070==    by 0x25287F: ffurl_connect (avio.c:193)
+==00:00:02:15.908 9070==    by 0x252B66: ffurl_open_whitelist (avio.c:345)
+==00:00:02:15.908 9070==    by 0x224B58: ffio_open_whitelist (aviobuf.c:1167)
+==00:00:02:15.908 9070==    by 0x224BAD: avio_open2 (aviobuf.c:1181)
+==00:00:02:15.908 9070==    by 0x21E65B: net_thread (net.c:152)
+==00:00:02:15.908 9070==    by 0x4E3F4A3: start_thread (pthread_create.c:456)
+==00:00:02:15.908 9070==    by 0x12993D0E: clone (clone.S:97)
+==00:00:02:15.908 9070== 
+==00:00:02:15.908 9070== 44 bytes in 1 blocks are still reachable in loss record 21 of 48
+==00:00:02:15.908 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.908 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.908 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.908 9070==    by 0xCFD16F: av_opt_set (opt.c:217)
+==00:00:02:15.908 9070==    by 0xCFD9DD: av_opt_set_dict2 (opt.c:1588)
+==00:00:02:15.908 9070==    by 0x252B54: ffurl_open_whitelist (avio.c:342)
+==00:00:02:15.908 9070==    by 0x28C821: http_listen.isra.8 (http.c:507)
+==00:00:02:15.908 9070==    by 0x25277C: ffurl_connect (avio.c:209)
+==00:00:02:15.908 9070==    by 0x252B66: ffurl_open_whitelist (avio.c:345)
+==00:00:02:15.908 9070==    by 0x224B58: ffio_open_whitelist (aviobuf.c:1167)
+==00:00:02:15.908 9070==    by 0x224BAD: avio_open2 (aviobuf.c:1181)
+==00:00:02:15.908 9070==    by 0x21E65B: net_thread (net.c:152)
+==00:00:02:15.908 9070== 
+==00:00:02:15.908 9070== 44 bytes in 1 blocks are still reachable in loss record 22 of 48
+==00:00:02:15.908 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.908 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.908 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.908 9070==    by 0x224A19: ffio_fdopen (aviobuf.c:1008)
+==00:00:02:15.908 9070==    by 0x224B6D: ffio_open_whitelist (aviobuf.c:1170)
+==00:00:02:15.908 9070==    by 0x224BAD: avio_open2 (aviobuf.c:1181)
+==00:00:02:15.908 9070==    by 0x21E65B: net_thread (net.c:152)
+==00:00:02:15.908 9070==    by 0x4E3F4A3: start_thread (pthread_create.c:456)
+==00:00:02:15.908 9070==    by 0x12993D0E: clone (clone.S:97)
+==00:00:02:15.908 9070== 
+==00:00:02:15.908 9070== 44 bytes in 1 blocks are still reachable in loss record 23 of 48
+==00:00:02:15.908 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.908 9070==    by 0x1292B3B9: strdup (strdup.c:42)
+==00:00:02:15.908 9070==    by 0xC3115C0: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0x17960B5B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x1796147B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x17962D80: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x179634B4: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0x1796581E: XML_ParseBuffer (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070==    by 0xC30FB9A: FcConfigParseAndLoad (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC30FEB6: FcConfigParseAndLoad (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0xC310947: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.908 9070==    by 0x17960B5B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.908 9070== 
+==00:00:02:15.908 9070== 60 bytes in 4 blocks are still reachable in loss record 24 of 48
+==00:00:02:15.908 9070==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
+==00:00:02:15.908 9070==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
+==00:00:02:15.908 9070==    by 0xCF9B90: av_strdup (mem.c:256)
+==00:00:02:15.908 9070==    by 0xCFB5D0: av_opt_set_defaults2 (opt.c:217)
+==00:00:02:15.909 9070==    by 0x2523F8: url_alloc_for_protocol (avio.c:116)
+==00:00:02:15.909 9070==    by 0x2523F8: ffurl_alloc (avio.c:297)
+==00:00:02:15.909 9070==    by 0x252A4E: ffurl_open_whitelist (avio.c:314)
+==00:00:02:15.909 9070==    by 0x224B58: ffio_open_whitelist (aviobuf.c:1167)
+==00:00:02:15.909 9070==    by 0x224BAD: avio_open2 (aviobuf.c:1181)
+==00:00:02:15.909 9070==    by 0x21E65B: net_thread (net.c:152)
+==00:00:02:15.909 9070==    by 0x4E3F4A3: start_thread (pthread_create.c:456)
+==00:00:02:15.909 9070==    by 0x12993D0E: clone (clone.S:97)
+==00:00:02:15.909 9070== 
+==00:00:02:15.909 9070== 64 bytes in 1 blocks are still reachable in loss record 25 of 48
+==00:00:02:15.909 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.909 9070==    by 0x1B514E60: g_malloc0 (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.909 9070==    by 0x1B4FDD2F: g_hash_table_new_full (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.909 9070==    by 0x1B51FE6A: ??? (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.909 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.909 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.909 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.909 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.909 9070==    by 0x9: ???
+==00:00:02:15.909 9070==    by 0xFFF00019A: ???
+==00:00:02:15.909 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.909 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.909 9070==    by 0xFFF0001B1: ???
+==00:00:02:15.909 9070== 
+==00:00:02:15.909 9070== 64 bytes in 2 blocks are still reachable in loss record 26 of 48
+==00:00:02:15.909 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.909 9070==    by 0xC3095F9: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.909 9070==    by 0xC3097BC: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.909 9070==    by 0xC311377: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.909 9070==    by 0x17960B5B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.909 9070==    by 0x1796147B: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.909 9070==    by 0x17962D80: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.909 9070==    by 0x179634B4: ??? (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.909 9070==    by 0x1796581E: XML_ParseBuffer (in /lib/x86_64-linux-gnu/libexpat.so.1.6.2)
+==00:00:02:15.909 9070==    by 0xC30FB9A: FcConfigParseAndLoad (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.909 9070==    by 0xC30FEB6: FcConfigParseAndLoad (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.909 9070==    by 0xC310947: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.909 9070== 
+==00:00:02:15.909 9070== 88 bytes in 1 blocks are still reachable in loss record 27 of 48
+==00:00:02:15.909 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.909 9070==    by 0x1B514E08: g_malloc (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.909 9070==    by 0x1B52D342: g_slice_alloc (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.909 9070==    by 0x1B4FDCDD: g_hash_table_new_full (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.909 9070==    by 0x1B51FE6A: ??? (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.909 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.909 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.909 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.909 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.909 9070==    by 0x9: ???
+==00:00:02:15.909 9070==    by 0xFFF00019A: ???
+==00:00:02:15.909 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.909 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.909 9070== 
+==00:00:02:15.909 9070== 128 bytes in 1 blocks are definitely lost in loss record 28 of 48
+==00:00:02:15.909 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.909 9070==    by 0xC2FD493: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.909 9070==    by 0xC2F91EC: FcConfigSubstituteWithPat (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==00:00:02:15.909 9070==    by 0xBC4D1C9: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.909 9070==    by 0xBC3906C: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.909 9070==    by 0xBC39AED: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.909 9070==    by 0xBC371D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.909 9070==    by 0xBC375D0: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.909 9070==    by 0xBC47691: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.909 9070==    by 0xBC3D3D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.909 9070==    by 0xBC3DB09: ass_render_frame (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==00:00:02:15.909 9070==    by 0x220626: sub_draw (sub.c:124)
+==00:00:02:15.909 9070== 
+==00:00:02:15.909 9070== 264 bytes in 1 blocks are still reachable in loss record 29 of 48
+==00:00:02:15.909 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.909 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.909 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.909 9070==    by 0x221A1B: avio_alloc_context (aviobuf.c:140)
+==00:00:02:15.909 9070==    by 0x2249FE: ffio_fdopen (aviobuf.c:1003)
+==00:00:02:15.909 9070==    by 0x224B6D: ffio_open_whitelist (aviobuf.c:1170)
+==00:00:02:15.909 9070==    by 0x224BAD: avio_open2 (aviobuf.c:1181)
+==00:00:02:15.909 9070==    by 0x21E65B: net_thread (net.c:152)
+==00:00:02:15.909 9070==    by 0x4E3F4A3: start_thread (pthread_create.c:456)
+==00:00:02:15.909 9070==    by 0x12993D0E: clone (clone.S:97)
+==00:00:02:15.909 9070== 
+==00:00:02:15.909 9070== 405 bytes in 1 blocks are still reachable in loss record 30 of 48
+==00:00:02:15.909 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.909 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.909 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.909 9070==    by 0xCE4AB6: av_asprintf (avstring.c:125)
+==00:00:02:15.909 9070==    by 0x21ECB1: net_init (net.c:68)
+==00:00:02:15.909 9070==    by 0x220227: vlt_start (vlt.c:71)
+==00:00:02:15.909 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.909 9070== 
+==00:00:02:15.909 9070== 448 bytes in 1 blocks are possibly lost in loss record 31 of 48
+==00:00:02:15.909 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.909 9070==    by 0x4011E31: allocate_dtv (dl-tls.c:322)
+==00:00:02:15.909 9070==    by 0x40127BD: _dl_allocate_tls (dl-tls.c:539)
+==00:00:02:15.909 9070==    by 0x4E40189: allocate_stack (allocatestack.c:584)
+==00:00:02:15.909 9070==    by 0x4E40189: pthread_create@@GLIBC_2.2.5 (pthread_create.c:663)
+==00:00:02:15.909 9070==    by 0x21ED0E: net_init (net.c:84)
+==00:00:02:15.909 9070==    by 0x220227: vlt_start (vlt.c:71)
+==00:00:02:15.909 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.909 9070== 
+==00:00:02:15.909 9070== 1,056 bytes in 1 blocks are still reachable in loss record 32 of 48
+==00:00:02:15.909 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.909 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.909 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.909 9070==    by 0x61A2D2: avcodec_alloc_context3 (options.c:158)
+==00:00:02:15.910 9070==    by 0x21F930: demuxer_get_video_stream (demuxer.c:100)
+==00:00:02:15.910 9070==    by 0x21F930: demuxer_new (demuxer.c:59)
+==00:00:02:15.910 9070==    by 0x22008A: vlt_loop (vlt.c:23)
+==00:00:02:15.910 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.910 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.910 9070== 
+==00:00:02:15.910 9070== 1,056 bytes in 1 blocks are indirectly lost in loss record 33 of 48
+==00:00:02:15.910 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.910 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.910 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.910 9070==    by 0x61A2D2: avcodec_alloc_context3 (options.c:158)
+==00:00:02:15.910 9070==    by 0x239244: avformat_new_stream (utils.c:4499)
+==00:00:02:15.910 9070==    by 0x2208D6: muxer_add_video_stream (muxer.c:125)
+==00:00:02:15.910 9070==    by 0x2208D6: muxer_new (muxer.c:84)
+==00:00:02:15.910 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.910 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.910 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.910 9070== 
+==00:00:02:15.910 9070== 1,480 bytes in 2 blocks are indirectly lost in loss record 34 of 48
+==00:00:02:15.910 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.910 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.910 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.910 9070==    by 0xCF9AED: av_mallocz (mem.c:238)
+==00:00:02:15.910 9070==    by 0xCE68DC: av_buffer_create (buffer.c:35)
+==00:00:02:15.910 9070==    by 0xCE69B8: av_buffer_alloc (buffer.c:76)
+==00:00:02:15.910 9070==    by 0x3BA2B4: av_grow_packet (avpacket.c:139)
+==00:00:02:15.910 9070==    by 0x22D71A: append_packet_chunked (utils.c:289)
+==00:00:02:15.910 9070==    by 0x24EE3F: avi_read_packet (avidec.c:1443)
+==00:00:02:15.910 9070==    by 0x2322AC: ff_read_packet (utils.c:856)
+==00:00:02:15.910 9070==    by 0x232E95: read_frame_internal (utils.c:1582)
+==00:00:02:15.910 9070==    by 0x234FDD: avformat_find_stream_info (utils.c:3772)
+==00:00:02:15.910 9070== 
+==00:00:02:15.910 9070== 2,032 bytes in 1 blocks are still reachable in loss record 35 of 48
+==00:00:02:15.910 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.910 9070==    by 0x1B514E60: g_malloc0 (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.910 9070==    by 0x1B52D5A3: g_slice_alloc (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.910 9070==    by 0x1B4FDCDD: g_hash_table_new_full (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.910 9070==    by 0x1B51FE6A: ??? (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.910 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.910 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.910 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.910 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.910 9070==    by 0x9: ???
+==00:00:02:15.910 9070==    by 0xFFF00019A: ???
+==00:00:02:15.910 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.910 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.910 9070== 
+==00:00:02:15.910 9070== 2,064 bytes in 1 blocks are still reachable in loss record 36 of 48
+==00:00:02:15.910 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.910 9070==    by 0x1EC424DF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EC4100E: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EC42BD5: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EBFB378: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.910 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.910 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.910 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.910 9070==    by 0x9: ???
+==00:00:02:15.910 9070==    by 0xFFF00019A: ???
+==00:00:02:15.910 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.910 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.910 9070== 
+==00:00:02:15.910 9070== 2,064 bytes in 1 blocks are still reachable in loss record 37 of 48
+==00:00:02:15.910 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.910 9070==    by 0x1EC424DF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EC3FACF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EC42C5F: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EBFB378: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.910 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.910 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.910 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.910 9070==    by 0x9: ???
+==00:00:02:15.910 9070==    by 0xFFF00019A: ???
+==00:00:02:15.910 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.910 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.910 9070== 
+==00:00:02:15.910 9070== 2,064 bytes in 1 blocks are still reachable in loss record 38 of 48
+==00:00:02:15.910 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.910 9070==    by 0x1EC424DF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EC5CDEF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EC270B7: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EC42BF0: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x1EBFB378: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.910 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.910 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.910 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.910 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.910 9070==    by 0x9: ???
+==00:00:02:15.910 9070==    by 0xFFF00019A: ???
+==00:00:02:15.910 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.910 9070== 
+==00:00:02:15.910 9070== 2,064 bytes in 1 blocks are still reachable in loss record 39 of 48
+==00:00:02:15.910 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.910 9070==    by 0x1EC424DF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EC7E64F: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EC270C7: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EC42BF0: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EBFB378: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.911 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.911 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.911 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.911 9070==    by 0x9: ???
+==00:00:02:15.911 9070==    by 0xFFF00019A: ???
+==00:00:02:15.911 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.911 9070== 
+==00:00:02:15.911 9070== 2,064 bytes in 1 blocks are still reachable in loss record 40 of 48
+==00:00:02:15.911 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.911 9070==    by 0x1EC424DF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EC7ECFF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EC42BF0: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EBFB378: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.911 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.911 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.911 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.911 9070==    by 0x9: ???
+==00:00:02:15.911 9070==    by 0xFFF00019A: ???
+==00:00:02:15.911 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.911 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.911 9070== 
+==00:00:02:15.911 9070== 2,064 bytes in 1 blocks are still reachable in loss record 41 of 48
+==00:00:02:15.911 9070==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==00:00:02:15.911 9070==    by 0x1EC424DF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EC453CF: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EC42C10: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x1EBFB378: ??? (in /usr/lib/x86_64-linux-gnu/libpixman-1.so.0.34.0)
+==00:00:02:15.911 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.911 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.911 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.911 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.911 9070==    by 0x9: ???
+==00:00:02:15.911 9070==    by 0xFFF00019A: ???
+==00:00:02:15.911 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.911 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.911 9070== 
+==00:00:02:15.911 9070== 2,503 (1,056 direct, 1,447 indirect) bytes in 1 blocks are definitely lost in loss record 42 of 48
+==00:00:02:15.911 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.911 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.911 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.911 9070==    by 0x61A2D2: avcodec_alloc_context3 (options.c:158)
+==00:00:02:15.911 9070==    by 0x2391DF: avformat_new_stream (utils.c:4482)
+==00:00:02:15.911 9070==    by 0x2208D6: muxer_add_video_stream (muxer.c:125)
+==00:00:02:15.911 9070==    by 0x2208D6: muxer_new (muxer.c:84)
+==00:00:02:15.911 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.911 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.911 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.911 9070== 
+==00:00:02:15.911 9070== 9,984 bytes in 250 blocks are indirectly lost in loss record 43 of 48
+==00:00:02:15.911 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.911 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.911 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.911 9070==    by 0xCF9AED: av_mallocz (mem.c:238)
+==00:00:02:15.911 9070==    by 0x22796F: init_pts (mux.c:455)
+==00:00:02:15.911 9070==    by 0x2290C1: avformat_init_output (mux.c:499)
+==00:00:02:15.911 9070==    by 0x229A0C: avformat_write_header (mux.c:515)
+==00:00:02:15.911 9070==    by 0x220BB0: muxer_new (muxer.c:90)
+==00:00:02:15.911 9070==    by 0x220096: vlt_loop (vlt.c:24)
+==00:00:02:15.911 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.911 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.911 9070== 
+==00:00:02:15.911 9070== 13,386 bytes in 13 blocks are still reachable in loss record 44 of 48
+==00:00:02:15.911 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.911 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.911 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.911 9070==    by 0xCF9AED: av_mallocz (mem.c:238)
+==00:00:02:15.911 9070==    by 0x21F857: demuxer_new (demuxer.c:36)
+==00:00:02:15.911 9070==    by 0x22008A: vlt_loop (vlt.c:23)
+==00:00:02:15.911 9070==    by 0x220290: vlt_start (vlt.c:83)
+==00:00:02:15.911 9070==    by 0x21E47C: main (main.c:103)
+==00:00:02:15.911 9070== 
+==00:00:02:15.911 9070== 16,384 bytes in 1 blocks are still reachable in loss record 45 of 48
+==00:00:02:15.911 9070==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==00:00:02:15.911 9070==    by 0x1B514E08: g_malloc (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.911 9070==    by 0x1B51FE7B: ??? (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.5000.3)
+==00:00:02:15.911 9070==    by 0x400F799: call_init.part.0 (dl-init.c:72)
+==00:00:02:15.911 9070==    by 0x400F8AA: call_init (dl-init.c:30)
+==00:00:02:15.911 9070==    by 0x400F8AA: _dl_init (dl-init.c:120)
+==00:00:02:15.911 9070==    by 0x4000C59: ??? (in /lib/x86_64-linux-gnu/ld-2.24.so)
+==00:00:02:15.911 9070==    by 0x9: ???
+==00:00:02:15.911 9070==    by 0xFFF00019A: ???
+==00:00:02:15.911 9070==    by 0xFFF0001A0: ???
+==00:00:02:15.911 9070==    by 0xFFF0001A3: ???
+==00:00:02:15.911 9070==    by 0xFFF0001B1: ???
+==00:00:02:15.911 9070==    by 0xFFF0001B4: ???
+==00:00:02:15.911 9070== 
+==00:00:02:15.911 9070== 32,768 bytes in 1 blocks are still reachable in loss record 46 of 48
+==00:00:02:15.911 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.911 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.911 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.911 9070==    by 0x2249A6: ffio_fdopen (aviobuf.c:993)
+==00:00:02:15.911 9070==    by 0x224B6D: ffio_open_whitelist (aviobuf.c:1170)
+==00:00:02:15.912 9070==    by 0x224BAD: avio_open2 (aviobuf.c:1181)
+==00:00:02:15.912 9070==    by 0x21E65B: net_thread (net.c:152)
+==00:00:02:15.912 9070==    by 0x4E3F4A3: start_thread (pthread_create.c:456)
+==00:00:02:15.912 9070==    by 0x12993D0E: clone (clone.S:97)
+==00:00:02:15.912 9070== 
+==00:00:02:15.912 9070== 844,860 bytes in 250 blocks are indirectly lost in loss record 47 of 48
+==00:00:02:15.912 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.912 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.912 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.912 9070==    by 0xCE6998: av_buffer_alloc (buffer.c:72)
+==00:00:02:15.912 9070==    by 0x3BA2B4: av_grow_packet (avpacket.c:139)
+==00:00:02:15.912 9070==    by 0x22D71A: append_packet_chunked (utils.c:289)
+==00:00:02:15.912 9070==    by 0x24EE3F: avi_read_packet (avidec.c:1443)
+==00:00:02:15.912 9070==    by 0x2322AC: ff_read_packet (utils.c:856)
+==00:00:02:15.912 9070==    by 0x232E95: read_frame_internal (utils.c:1582)
+==00:00:02:15.912 9070==    by 0x234FDD: avformat_find_stream_info (utils.c:3772)
+==00:00:02:15.912 9070==    by 0x21F8CA: demuxer_new (demuxer.c:56)
+==00:00:02:15.912 9070==    by 0x22008A: vlt_loop (vlt.c:23)
+==00:00:02:15.912 9070== 
+==00:00:02:15.912 9070== 862,458 (6,480 direct, 855,978 indirect) bytes in 255 blocks are definitely lost in loss record 48 of 48
+==00:00:02:15.912 9070==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
+==00:00:02:15.912 9070==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
+==00:00:02:15.912 9070==    by 0xCF98E6: av_malloc (mem.c:87)
+==00:00:02:15.912 9070==    by 0xCF9AED: av_mallocz (mem.c:238)
+==00:00:02:15.912 9070==    by 0xCE6910: av_buffer_create (buffer.c:49)
+==00:00:02:15.912 9070==    by 0xCE69B8: av_buffer_alloc (buffer.c:76)
+==00:00:02:15.912 9070==    by 0x3BA2B4: av_grow_packet (avpacket.c:139)
+==00:00:02:15.912 9070==    by 0x22D71A: append_packet_chunked (utils.c:289)
+==00:00:02:15.912 9070==    by 0x24EE3F: avi_read_packet (avidec.c:1443)
+==00:00:02:15.912 9070==    by 0x2322AC: ff_read_packet (utils.c:856)
+==00:00:02:15.912 9070==    by 0x232E95: read_frame_internal (utils.c:1582)
+==00:00:02:15.912 9070==    by 0x234FDD: avformat_find_stream_info (utils.c:3772)
+==00:00:02:15.912 9070== 
+==00:00:02:15.912 9070== LEAK SUMMARY:
+==00:00:02:15.912 9070==    definitely lost: 7,696 bytes in 260 blocks
+==00:00:02:15.912 9070==    indirectly lost: 857,425 bytes in 507 blocks
+==00:00:02:15.912 9070==      possibly lost: 448 bytes in 1 blocks
+==00:00:02:15.912 9070==    still reachable: 79,394 bytes in 50 blocks
+==00:00:02:15.912 9070==         suppressed: 0 bytes in 0 blocks
+==00:00:02:15.912 9070== 
+==00:00:02:15.912 9070== For counts of detected and suppressed errors, rerun with: -v
+==00:00:02:15.912 9070== ERROR SUMMARY: 257 errors from 8 contexts (suppressed: 0 from 0)

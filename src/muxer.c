@@ -18,7 +18,6 @@
 #define OUTPUT_PIXFMT         AV_PIX_FMT_YUV420P
 #define OUTPUT_PIXFMT_SUB     AV_PIX_FMT_RGB24
 #define OUTPUT_VIDEO_ENCODER  AV_CODEC_ID_H264
-#define OUTPUT_CHANNELS       2
 #define OUTPUT_H264_PROFILE   FF_PROFILE_H264_HIGH
 #define OUTPUT_H264_PRESET    "fast"
 
@@ -35,8 +34,8 @@ static muxer_t      *mux;
 static AVDictionary *opts;        // codec options
 struct SwsContext   *ctx_sws;     // transcoding sws contex
 struct SwsContext   *ctx_sws_sub; // transcoding sws contex for sub
-static uint8_t      *buf;         // buffer for ctx_sws
-static uint8_t      *buf_sub;     // buffer for ctx_sws_sub
+//static uint8_t      *buf;         // buffer for ctx_sws
+//static uint8_t      *buf_sub;     // buffer for ctx_sws_sub
 static AVFrame      *vframe;      // video frame after decoding
 static AVFrame      *vframe_sub;  // video frame with sub
 static AVPacket     *packet;      // encoded data
@@ -87,14 +86,14 @@ muxer_new (const char* name, demuxer_t *demux) {
 	muxer_img_conv_init();
 	sub_init(mux->width, mux->height);
 
-	if ( (ret = avformat_write_header(ctx_f, NULL)) < 0) {
-		ERR_EXIT("MUXER:'%s' failed: %s", "avformat_write_header", av_err2str(ret));
-	}
-
 	if (!(ctx_f->oformat->flags & AVFMT_NOFILE)) {
 		if ( (ret = avio_open(&ctx_f->pb, name, AVIO_FLAG_WRITE)) < 0) {
 			ERR_EXIT("MUXER:'%s' failed: %s", "avio_open", av_err2str(ret));
 		}
+	}
+
+	if ( (ret = avformat_write_header(ctx_f, NULL)) < 0) {
+		ERR_EXIT("MUXER:'%s' failed: %s", "avformat_write_header", av_err2str(ret));
 	}
 
 	av_dump_format(ctx_f, 0, name, 1);
@@ -104,7 +103,9 @@ muxer_new (const char* name, demuxer_t *demux) {
 static void
 muxer_add_audio_stream(AVCodecParameters *par) {
 	int ret = 0;
-
+	if(par == NULL) {
+		ERR_EXIT("%s", "Could not create audio stream, codec params is NULL.");
+	}
 	if ((sa = avformat_new_stream(ctx_f, NULL)) == NULL) {
 		ERR_EXIT("%s", "Could not create audio stream");
 	}
@@ -121,7 +122,6 @@ muxer_add_video_stream() {
 	if ((cv = avcodec_find_encoder(OUTPUT_VIDEO_ENCODER)) == NULL) {
 		ERR_EXIT("MUXER:'%s' failed", "avcodec_find_encoder");
 	}
-
 	if ((sv = avformat_new_stream(ctx_f, cv)) == NULL) {
 		ERR_EXIT("MUXER:'%s' failed", "avformat_new_stream");
 	}
@@ -155,31 +155,35 @@ muxer_add_video_stream() {
 	if ((ret = avcodec_open2(ctx_cv, cv, &opts)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "avcodec_open2", av_err2str(ret));
 	}
+	
+	av_dict_free(&opts);
 }
 
 void
 muxer_free (void) {
 	sub_destroy();
-	av_packet_unref(packet);
-	av_free(buf);
+	av_packet_free(&packet);
+	//av_free(buf);
+	av_freep(&vframe->data[0]);
 	av_frame_free(&vframe);
-	av_free(buf_sub);
-	av_frame_free(&vframe_sub);
-	av_free(sv);
-	av_free(sa);
-	av_dict_free(&opts);
+	//av_free(buf_sub);
+	av_freep(&vframe_sub->data[0]);
+	av_frame_free(&vframe_sub);	
+	avcodec_close(ctx_cv);
 	avcodec_free_context(&ctx_cv);
 	avio_close(ctx_f->pb);
-	av_free(ctx_f);
+	avformat_free_context(ctx_f);
 	sws_freeContext(ctx_sws);
 	sws_freeContext(ctx_sws_sub);
+	av_free(mux);
 }
 
 /// image resizing/scaling
 
 void
 muxer_img_conv_init(void) {
-	int size = 0, size_sub = 0, ret = 0;
+	//int size = 0, size_sub = 0, align = 32, ret = 0;
+	int align = 32, ret = 0;
 
 	if ((vframe = av_frame_alloc()) == NULL) {
 		ERR_EXIT("MUXER:'%s' failed", "av_frame_alloc");
@@ -189,11 +193,11 @@ muxer_img_conv_init(void) {
 		ERR_EXIT("MUXER:'%s' failed", "av_frame_alloc");
 	}
 
-	if ((size = av_image_get_buffer_size(mux->pix_fmt_out, mux->width, mux->height, 1)) < 0) {
+	/*if ((size = av_image_get_buffer_size(mux->pix_fmt_out, mux->width, mux->height, align)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed", "av_image_get_buffer_size");
 	}
 
-	if ((size_sub = av_image_get_buffer_size(OUTPUT_PIXFMT_SUB, mux->width, mux->height, 1)) < 0) {
+	if ((size_sub = av_image_get_buffer_size(OUTPUT_PIXFMT_SUB, mux->width, mux->height, align)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed", "av_image_get_buffer_size");
 	}
 
@@ -205,33 +209,42 @@ muxer_img_conv_init(void) {
 		ERR_EXIT("MUXER:'%s' failed", "av_frame_alloc");
 	}
 
-	if ((ret = av_image_fill_arrays(vframe->data, vframe->linesize, buf, mux->pix_fmt_out, mux->width, mux->height, 1)) < 0) {
+	if ((ret = av_image_fill_arrays(vframe->data, vframe->linesize, buf, mux->pix_fmt_out, mux->width, mux->height, align)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
 	}
 
-	if ((ret = av_image_fill_arrays(vframe_sub->data, vframe_sub->linesize, buf_sub, OUTPUT_PIXFMT_SUB, mux->width, mux->height, 1)) < 0) {
+	if ((ret = av_image_fill_arrays(vframe_sub->data, vframe_sub->linesize, buf_sub, OUTPUT_PIXFMT_SUB, mux->width, mux->height, align)) < 0) {
+		ERR_EXIT("MUXER:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
+	}*/
+
+	if ((ret = av_image_alloc(vframe->data, vframe->linesize, mux->width, mux->height, mux->pix_fmt_out, align)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
 	}
-
+	
+	
+	if ((ret = av_image_alloc(vframe_sub->data, vframe_sub->linesize, mux->width, mux->height, OUTPUT_PIXFMT_SUB, align)) < 0) {
+		ERR_EXIT("MUXER:'%s' failed: %s", "av_image_fill_arrays", av_err2str(ret));
+	}
+	
 	if ((ctx_sws = sws_getContext(
-								mux->width,
-								mux->height,
-								OUTPUT_PIXFMT_SUB,
-								mux->width,
-								mux->height,
-								mux->pix_fmt_out,
-								SWS_BICUBIC, NULL, NULL, NULL)) == NULL) {
+		mux->width,
+		mux->height,
+		OUTPUT_PIXFMT_SUB,
+		mux->width,
+		mux->height,
+		mux->pix_fmt_out,
+		SWS_BICUBIC, NULL, NULL, NULL)) == NULL) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "sws_getContext", av_err2str(ret));
 	}
 
 	if ((ctx_sws_sub = sws_getContext(
-									mux->width,
-									mux->height,
-									mux->pix_fmt_inp,
-									mux->width,
-									mux->height,
-									OUTPUT_PIXFMT_SUB,
-									SWS_BICUBIC, NULL, NULL, NULL)) == NULL) {
+		mux->width,
+		mux->height,
+		mux->pix_fmt_inp,
+		mux->width,
+		mux->height,
+		OUTPUT_PIXFMT_SUB,
+		SWS_BICUBIC, NULL, NULL, NULL)) == NULL) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "sws_getContext", av_err2str(ret));
 	}
 }
@@ -255,7 +268,7 @@ muxer_pack_video(AVFrame *src, const char* subtitle) {
 	if (( ret = sws_scale(ctx_sws, (const uint8_t * const*) vframe_sub->data, vframe_sub->linesize, 0, mux->height, vframe->data, vframe->linesize)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "sws_scale", av_err2str(ret));
 	}
-
+		
 	vframe->pts    = mux->fc++;
 	vframe->format = mux->pix_fmt_out;
 	vframe->width  = mux->width;
@@ -274,15 +287,15 @@ muxer_encode_video(void) {
 
 void
 muxer_write_audio(AVPacket *p) {
-	if (sia == -1)
+	if (sia == -1) {
 		return;
+	}
 	int ret = 0;
 	p->stream_index = sia;
 	av_packet_rescale_ts(p, atb, sa->time_base);
 	if ((ret = av_interleaved_write_frame(ctx_f, p)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "av_interleaved_write_frame", av_err2str(ret));
 	}
-	av_packet_unref(p);
 }
 
 void
@@ -309,5 +322,5 @@ muxer_finish(void) {
 	int ret = 0;
 	if ((ret = av_write_trailer(ctx_f)) < 0) {
 		ERR_EXIT("MUXER:'%s' failed: %s", "av_write_trailer", av_err2str(ret));
-	}	
+	}
 }

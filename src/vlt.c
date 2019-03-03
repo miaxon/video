@@ -22,9 +22,14 @@ vlt_loop(param_t *param) {
 	demuxer_t *inp = NULL;
 	inp = demuxer_new(param->file, param->audio);
 	muxer_new(param->stream, inp);
-
+	//int n = 0;
 	int	ret =  PACKET_UNKNOWN;
 	while ( (ret = demuxer_read()) >= 0) {
+		//if(n++ > 100){
+		//	INFO("VLT: break %d", n);
+		//	break;
+		//}
+			
 		switch (ret) {
 			case PACKET_AUDIO:
 				muxer_write_audio(demuxer_get_packet());
@@ -49,11 +54,11 @@ vlt_loop(param_t *param) {
 					ERR_EXIT("VIDEO:'%s' failed: %s", "avcodec_receive_frame", av_err2str(ret));
 
 				break;
-			default:
+			default:				
 				continue; // do nothing
 		}
 	}
-	
+
 	muxer_finish();
 	demuxer_free();
 	muxer_free();
@@ -63,13 +68,13 @@ int
 vlt_start (param_t *param) {
 
 	int loop = param->loop;
-	
+
 	if (param->debug)
 		av_log_set_level(AV_LOG_DEBUG);
 
 	if (param->url)
 		net_init(param->title, param->url, param->res);
-	
+
 	if (loop == 0) {
 		for (int i = 1; ; i++) {
 			INFO("loop %d", i);

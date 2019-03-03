@@ -148,23 +148,32 @@ net_thread(void *param) {
 	if ((ret = av_dict_set(&opts, "listen", "2", 0)) < 0) {
 		ERR_EXIT("HTTP:'%s' failed: %s", "av_dict_set", av_err2str(ret));
 	}
-
+	
+	
 	if ((ret = avio_open2(&server, url, AVIO_FLAG_WRITE, NULL, &opts)) < 0) {
 		ERR_EXIT("HTTP:'%s' failed: %s", "avio_open2", av_err2str(ret));
 	}
+	av_dict_free(&opts);
 	INFO("HTTP: start http listen: %s", url);
 	for (; ; ) {
 		if ((ret = avio_accept(server, &client)) < 0) {
 			ERROR("HTTP:'%s' failed: %s", "avio_accept", av_err2str(ret));
 			continue;
 		}
+		ERROR("HTTP:'%s' failed: %s", "avio_accept", av_err2str(ret));
 		ret = net_client(client);
 		if (ret < 0)
 			break;
 	}
 	INFO("HTTP: stop http listen: %s", url);
+	
 	pthread_mutex_destroy(&mutex);
 	avio_close(server);
+}
+
+void
+net_close(void){
+	
 }
 
 static int

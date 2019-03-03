@@ -7,11 +7,11 @@ extern "C" {
 #include "vlt.h"
 
 	int net_init(char *title, char *url, char *resource);
-	
+
 	char*
 	net_subtitle(void);
-        void
-        net_clear(void);
+	void
+	net_clear(void);
 
 #ifdef __cplusplus
 }

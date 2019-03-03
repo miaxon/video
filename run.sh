@@ -9,4 +9,4 @@ fi
 #make clean
 #make
 cp -f $PROG $BIN
-cd $BIN && ./vlt -t 'Hello, World!' -u http://127.0.0.1:4545 -a -f ../assets/sample.mp4
+cd $BIN && ./vlt -t 'Hello, World!' -u http://127.0.0.1:4545 -a -f ../assets/sample.mp4 -l 2

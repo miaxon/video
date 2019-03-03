@@ -30,12 +30,12 @@ extern "C" {
 
     int
     demuxer_decode_video(void);
-    int
-    demuxer_decode_audio(void);
+//    int
+//    demuxer_decode_audio(void);
     void
     demuxer_free(void);
-    AVFrame*
-    demuxer_get_frame_audio(void);
+//    AVFrame*
+//    demuxer_get_frame_audio(void);
     AVFrame*
     demuxer_get_frame_video(void);
     AVPacket*
@@ -44,10 +44,10 @@ extern "C" {
     demuxer_new(const char* name, int audio);
     packet_t
     demuxer_read(void);
-    void
-    demuxer_rewind(void);
-    void
-    demuxer_unpack_audio(void);
+//    void
+//    demuxer_rewind(void);
+//    void
+//    demuxer_unpack_audio(void);
     void
     demuxer_unpack_video(void);
 

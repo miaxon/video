@@ -159,7 +159,7 @@ net_thread(void *param) {
 		if(ret == NET_STATE_CANCEL)
 			break;
 	}
-	avio_flush(server);
+	
 	if ((ret = avio_close(server)) < 0) {
 		ERR_EXIT("HTTP:'%s' failed: (%d) %s", "avio_close", ret, av_err2str(ret));
 	}
@@ -202,7 +202,7 @@ net_client(AVIOContext * client) {
 	avio_write(client, html, strlen((const char*) html));
 
 	av_freep(&resource);
-	avio_flush(client);
+	
 	if ((ret = avio_close(client)) < 0) {
 		ERR_EXIT("HTTP:'%s' failed: (%d) %s", "avio_close", ret, av_err2str(ret));
 	}

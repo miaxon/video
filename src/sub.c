@@ -105,9 +105,6 @@ sub_draw(AVFrame *frame, const char* sub) {
 		return 0;
 	}
 
-	if (track) {
-		ass_free_track(track);
-	}
 	char *buf  = av_asprintf(
 							ASS_TRACK_STRING,
 							AV_STRINGIFY(LIBAVCODEC_VERSION),
@@ -127,6 +124,7 @@ sub_draw(AVFrame *frame, const char* sub) {
 	av_free(buf);
 	img = ass_render_frame(rnd, track, 0, NULL);
 	sub_blend(frame, img);
+	ass_free_track(track);
 	memset(current_sub, 0, ASS_SUB_SIZE);
 	strncpy(current_sub, sub, ASS_SUB_SIZE - 1);
 	return 0;

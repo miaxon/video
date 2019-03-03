@@ -5,6 +5,7 @@
 #include <libavutil/mathematics.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
+#include <libavutil/time.h>
 
 
 #include "log.h"
@@ -18,19 +19,13 @@ static void vlt_loop(param_t *param);
 
 static void
 vlt_loop(param_t *param) {
-
-	if (param->url)
-		net_init(param->title, param->url, param->res);
 	demuxer_t *inp = NULL;
+	int	ret =  PACKET_UNKNOWN;
+	
 	inp = demuxer_new(param->file, param->audio);
 	muxer_new(param->stream, inp);
-	int n = 0;
-	int	ret =  PACKET_UNKNOWN;
+	
 	while ( (ret = demuxer_read()) >= 0) {
-		if(n++ > 100){
-			INFO("VLT: break %d", n);
-			break;
-		}
 			
 		switch (ret) {
 			case PACKET_AUDIO:
@@ -64,13 +59,16 @@ vlt_loop(param_t *param) {
 	muxer_finish();
 	demuxer_free();
 	muxer_free();
-	if (param->url)
-		net_close();
+	
 }
 
 int
 vlt_start (param_t *param) {
 
+	
+	if (param->url)
+		net_init(param->title, param->url, param->res);
+	
 	int loop = param->loop;
 
 	if (param->debug)

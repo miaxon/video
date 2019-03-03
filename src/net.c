@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <unistd.h>
+#include <signal.h>
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
 #include <libavformat/avio.h>
@@ -26,6 +27,7 @@ static char *url;
 static char *res;
 static unsigned const char *html;
 static pthread_mutex_t mutex;
+static pthread_t th;
 
 #define HTTP_FORM \
 "<!DOCTYPE html>"\
@@ -33,7 +35,7 @@ static pthread_mutex_t mutex;
 "<body>"\
 "<h4>Set subtitle on video.</h4>"\
 "<form id='form' accept-charset='utf-8' action='/%s'>"\
-"<p>Note 1: input text must be not over 256 characher's length in 3 lines.</p>"\
+"<p>Note 1: input text must be not over 256 characher's length.</p>"\
 "<p>Note 2: max lines number is 3.</p>"\
 "<p>Note 2: use '\\N' as newline delimiter.</p>"\
 "Text:<br>"\
@@ -60,8 +62,7 @@ net_clear_subtitle(void) {
 int
 net_init(char *t, char *u, char *r) {
 	int ret = 0;
-	pthread_t th;
-	pthread_attr_t attr;
+
 	memset(sub, 0, NET_SUB_SIZE);
 	strncpy(sub, t, NET_SUB_SIZE - 1);
 	url  = u;
@@ -72,23 +73,12 @@ net_init(char *t, char *u, char *r) {
 		ERR_EXIT("HTTP:'%s' failed: %s", "av_asprintf");
 	}
 
-	if ((ret = pthread_attr_init(&attr)) != 0) {
-		ERR_SYS("HTTP:'%s' failed: %s", "pthread_attr_init");
-	}
-
-	if ((ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) != 0) {
-		ERR_SYS("HTTP:'%s' failed: %s", "pthread_attr_setdetachstate");
-	}
-
 	if ((ret = pthread_mutex_init(&mutex, NULL)) != 0) {
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_init");
 	}
 
-	if ((ret = pthread_create(&th, NULL, entry, NULL)) != 0)
-		err_sys("Could note create web thread");
-
-	if ((ret = pthread_attr_destroy(&attr)) != 0) {
-		ERR_SYS("HTTP:'%s' failed: %s", "pthread_attr_destroy");
+	if ((ret = pthread_create(&th, NULL, entry, NULL)) != 0) {
+		ERR_SYS("HTTP:'%s' failed: %s", "pthread_create");
 	}
 
 	//pthread_join(th, NULL);
@@ -144,6 +134,8 @@ net_subtitle(void) {
 static void
 net_thread(void *param) {
 	//av_log_set_level(AV_LOG_TRACE);
+
+
 	int ret = 0;
 	AVDictionary *opts = NULL;
 	AVIOContext *client = NULL, *server = NULL;
@@ -152,11 +144,11 @@ net_thread(void *param) {
 		ERR_EXIT("HTTP:'%s' failed: %s", "av_dict_set", av_err2str(ret));
 	}
 
-
 	if ((ret = avio_open2(&server, url, AVIO_FLAG_WRITE, NULL, &opts)) < 0) {
 		ERR_EXIT("HTTP:'%s' failed: %s", "avio_open2", av_err2str(ret));
 	}
 	av_dict_free(&opts);
+
 	INFO("HTTP: start http listen: %s", url);
 	for (;;) {
 		if ((ret = avio_accept(server, &client)) < 0) {
@@ -164,51 +156,14 @@ net_thread(void *param) {
 			continue;
 		}
 		ret = net_client(client);
-		if (ret == NET_STATE_CANCEL)
+		if(ret == NET_STATE_CANCEL)
 			break;
 	}
+	avio_flush(server);
+	if ((ret = avio_close(server)) < 0) {
+		ERR_EXIT("HTTP:'%s' failed: (%d) %s", "avio_close", ret, av_err2str(ret));
+	}
 	INFO("HTTP: stop http listen: %s", url);
-
-	pthread_mutex_destroy(&mutex);
-	avio_close(server);
-	pthread_exit(NULL);
-}
-
-void
-net_close(void) {
-	int ret = 0;
-	AVIOContext *ctx_io;
-	AVDictionary *opts = NULL;
-	char *resource;
-
-	if ((resource = av_asprintf("%s/cancel", url)) == NULL ) {
-		ERR_EXIT("HTTP:'%s' failed", "av_asprintf");
-	}
-
-	if ((ret = av_dict_set(&opts, "method", "GET", 0)) < 0) {
-		ERR_EXIT("HTTP:'%s' failed: %s", "av_dict_set", av_err2str(ret));
-	}
-
-	if ((ret = av_dict_set(&opts, "auth_type", "none", 0)) < 0) {
-		ERR_EXIT("HTTP:'%s' failed: %s", "av_dict_set", av_err2str(ret));
-	}
-
-	if ((ret = avio_open2(&ctx_io, resource, AVIO_FLAG_WRITE, NULL, &opts)) < 0) {
-		ERR_EXIT("HTTP:'%s' failed: %s", "avio_open2", av_err2str(ret));
-	}
-	av_dict_free(&opts);
-	av_free(resource);
-
-	int64_t  code;
-	while ((ret = avio_handshake(ctx_io)) > 0) {
-		av_opt_get_int(ctx_io, "reply_code", AV_OPT_SEARCH_CHILDREN, &code);
-		break;
-	}
-	INFO("NET: close reply_code %d", code);
-	avio_flush(ctx_io);
-	avio_close(ctx_io);
-	
-	av_usleep(1000000);
 }
 
 static int
@@ -227,13 +182,7 @@ net_client(AVIOContext * client) {
 		return 0;
 	}
 
-	if (strstr(resource, "/cancel")) {
-		cancel_state = NET_STATE_CANCEL;
-		INFO("HTTP: cancel request received '%s' cancel_state %d", resource, cancel_state);
-		goto cancel;
-	}
 	reply_code = net_parse_request(resource);
-	av_freep(&resource);
 
 	if (reply_code == 200) {
 		if ((ret = av_opt_set(client, "location", res, AV_OPT_SEARCH_CHILDREN)) < 0) {
@@ -251,9 +200,11 @@ net_client(AVIOContext * client) {
 	while ((ret = avio_handshake(client)) > 0);
 
 	avio_write(client, html, strlen((const char*) html));
-cancel:
+
 	av_freep(&resource);
 	avio_flush(client);
-	avio_close(client);
+	if ((ret = avio_close(client)) < 0) {
+		ERR_EXIT("HTTP:'%s' failed: (%d) %s", "avio_close", ret, av_err2str(ret));
+	}
 	return cancel_state;
 }

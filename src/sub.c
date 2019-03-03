@@ -57,7 +57,6 @@ static int height;
 
 static void sub_msg_callback(int level, const char *fmt, va_list va, void *data);
 static void sub_blend(AVFrame * frame, ASS_Image *img);
-static ASS_Track* sub_get_track(const char *sub);
 
 static void
 sub_msg_callback(int level, const char *fmt, va_list va, void *data) {
@@ -66,28 +65,6 @@ sub_msg_callback(int level, const char *fmt, va_list va, void *data) {
 	printf("libass: ");
 	vprintf(fmt, va);
 	printf("\n");
-}
-
-static ASS_Track*
-sub_get_track(const char *sub) {
-
-	char *buf  = av_asprintf(
-		ASS_TRACK_STRING,
-		AV_STRINGIFY(LIBAVCODEC_VERSION),
-		width,
-		height,
-		ASS_DEFAULT_FONT,
-		ASS_DEFAULT_FONT_SIZE,
-		sub ? sub : ASS_DEFAULT_TEXT);
-
-	int size = strlen((const char*) buf);
-	//INFO("ASS: %s", buf);
-	ASS_Track *track = ass_read_memory(lib, buf, size, "utf-8");
-	if (!track) {
-		ERROR("SUB:'%s' failed", "ass_read_memory");
-	}
-	av_free(buf);
-	return track;
 }
 
 void
@@ -105,11 +82,11 @@ sub_init(int w, int h) {
 
 	memset(current_sub, 0, ASS_SUB_SIZE);
 	track  = NULL;
-	//ass_set_use_margins(rnd, 0);
+	ass_set_use_margins(rnd, 0);
 
-	//ass_set_font_scale(rnd, 1.0 );
+	ass_set_font_scale(rnd, 1.0 );
 
-	//ass_set_line_spacing(rnd, 0.0 );
+	ass_set_line_spacing(rnd, 0.0 );
 
 	ass_set_hinting(rnd, ASS_HINTING_NONE );
 
@@ -123,21 +100,34 @@ sub_init(int w, int h) {
 
 int
 sub_draw(AVFrame *frame, const char* sub) {
-	if(!strncmp(sub, current_sub, ASS_SUB_SIZE - 1)) {
+	if (!strncmp(sub, current_sub, ASS_SUB_SIZE - 1)) {
 		sub_blend(frame, img);
 		return 0;
 	}
-	
-	memset(current_sub, 0, ASS_SUB_SIZE);
-	if(track) {
+
+	if (track) {
 		ass_free_track(track);
 	}
+	char *buf  = av_asprintf(
+							ASS_TRACK_STRING,
+							AV_STRINGIFY(LIBAVCODEC_VERSION),
+							width,
+							height,
+							ASS_DEFAULT_FONT,
+							ASS_DEFAULT_FONT_SIZE,
+							sub ? sub : ASS_DEFAULT_TEXT);
 
-	if ((track = sub_get_track(sub)) == NULL) {
+	int size = strlen((const char*) buf);
+	//INFO("ASS: %s", buf);
+	track = ass_read_memory(lib, buf, size, "utf-8");
+	if (!track) {
+		ERROR("SUB:'%s' failed", "ass_read_memory");
 		return -1;
 	}
+	av_free(buf);
 	img = ass_render_frame(rnd, track, 0, NULL);
 	sub_blend(frame, img);
+	memset(current_sub, 0, ASS_SUB_SIZE);
 	strncpy(current_sub, sub, ASS_SUB_SIZE - 1);
 	return 0;
 }

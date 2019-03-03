@@ -19,6 +19,8 @@ static void vlt_loop(param_t *param);
 static void
 vlt_loop(param_t *param) {
 
+	if (param->url)
+		net_init(param->title, param->url, param->res);
 	demuxer_t *inp = NULL;
 	inp = demuxer_new(param->file, param->audio);
 	muxer_new(param->stream, inp);
@@ -40,7 +42,7 @@ vlt_loop(param_t *param) {
 
 					if (muxer_pack_video(demuxer_get_frame_video(), net_subtitle()) == -1) {
 						ERROR("VLT: %s", "invalid subtitle text, cleared.");
-						net_clear();
+						net_clear_subtitle();
 					}
 
 					while ((ret = muxer_encode_video()) >= 0) {
@@ -62,6 +64,8 @@ vlt_loop(param_t *param) {
 	muxer_finish();
 	demuxer_free();
 	muxer_free();
+	if (param->url)
+		net_close();
 }
 
 int
@@ -71,9 +75,6 @@ vlt_start (param_t *param) {
 
 	if (param->debug)
 		av_log_set_level(AV_LOG_DEBUG);
-
-	if (param->url)
-		net_init(param->title, param->url, param->res);
 
 	if (loop == 0) {
 		for (int i = 1; ; i++) {
@@ -88,6 +89,6 @@ vlt_start (param_t *param) {
 			vlt_loop(param);
 		}
 	}
-
+	
 	return 0;
 }

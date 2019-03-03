@@ -1,253 +1,52 @@
-valgrind --leak-check=full --leak-resolution=med ./vlt -t 'Hello, World!' -u http://127.0.0.1:4545 -a -f ../assets/sample.mp4 -l 1
-==6027== Memcheck, a memory error detector
-==6027== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
-==6027== Using Valgrind-3.12.0.SVN and LibVEX; rerun with -h for copyright info
-==6027== Command: ./vlt -t Hello,\ World! -u http://127.0.0.1:4545 -a -f ../assets/sample.mp4 -l 1
-==6027== 
---6027-- WARNING: Serious error when reading debug info
---6027-- When reading debug info from /home/alexcon/src/video/bin/vlt:
---6027-- get_Form_contents: DW_FORM_strp points outside .debug_str
-[INFO] main.c:139       | 
-using params:
-        file:      '../assets/sample.mp4'
-        stream:    'udp://127.0.0.1:1234'
-        loop:       1
-        http:      'http://127.0.0.1:4545'
-        resource:  'sub'
-        subtitle:  'Hello, World!'
-        audio:      Yes
-        debug:      No
-
-[INFO] vlt.c:82         | loop 1
-[INFO] demuxer.c:64     | DEMUXER: audio stream enabled
-Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '../assets/sample.mp4':
-  Metadata:
-    major_brand     : mp42
-    minor_version   : 1[INFO] net.c:155         | HTTP: start http listen: http://127.0.0.1:4545
-
-    compatible_brands: mp42avc1
-    creation_time   : 2010-02-09T01:55:39.000000Z
-  Duration: 00:01:00.10, start: 0.000000, bitrate: 733 kb/s
-    Stream #0:0(eng): Audio: aac (LC) (mp4a / 0x6134706D), 22050 Hz, stereo, fltp, 65 kb/s (default)                                                                        
-    Metadata:                                                                                                                                                               
-      creation_time   : 2010-02-09T01:55:39.000000Z                                                                                                                         
-      handler_name    : Apple Sound Media Handler                                                                                                                           
-    Stream #0:1(eng): Video: h264 (Constrained Baseline) (avc1 / 0x31637661), yuv420p(tv, smpte170m/smpte170m/bt709), 640x360, 612 kb/s, 23.96 fps, 24 tbr, 600 tbn, 1200 tbc (default)                                                                                                                                                                 
-    Metadata:                                                                                                                                                               
-      creation_time   : 2010-02-09T01:55:39.000000Z                                                                                                                         
-      handler_name    : Apple Video Media Handler                                                                                                                           
-    Stream #0:2(eng): Data: none (rtp  / 0x20707472), 45 kb/s                                                                                                               
-    Metadata:                                                                                                                                                               
-      creation_time   : 2010-02-09T01:55:39.000000Z                                                                                                                         
-      handler_name    : hint media handler                                                                                                                                  
-    Stream #0:3(eng): Data: none (rtp  / 0x20707472), 5 kb/s                                                                                                                
-    Metadata:                                                                                                                                                               
-      creation_time   : 2010-02-09T01:55:39.000000Z                                                                                                                         
-      handler_name    : hint media handler                                                                                                                                  
-[libx264 @ 0x20149440] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX                                                                                               
-[libx264 @ 0x20149440] profile High, level 3.0                                                                                                                              
-[ass] Shaper: FriBidi 0.19.7 (SIMPLE) HarfBuzz-ng 1.4.2 (COMPLEX)
-[ass] Using font provider fontconfig
-Output #0, mpegts, to 'udp://127.0.0.1:1234':
-  Metadata:
-    encoder         : Lavf58.20.100
-    Stream #0:0: Video: h264 (libx264) (High), none, 640x360, q=-1--1, 400 kb/s, 90k tbn
-    Stream #0:1: Audio: aac (LC) (mp4a / 0x6134706D), 22050 Hz, stereo, fltp, 65 kb/s
-==6027== Invalid read of size 16
-==6027==    at 0xCD2064: ??? (in /home/alexcon/src/video/bin/vlt)
-==6027==    by 0xCE24D2: lum_convert (hscale.c:108)
-==6027==    by 0xC7D26F: swscale (swscale.c:466)
-==6027==    by 0xC7E6EC: sws_scale (swscale.c:986)
-==6027==    by 0x2211FC: muxer_pack_video (muxer.c:253)
-==6027==    by 0x220107: vlt_loop (vlt.c:36)
-==6027==    by 0x220290: vlt_start (vlt.c:83)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027==  Address 0x289c3fb4 is 691,188 bytes inside a block of size 691,200 alloc'd
-==6027==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
-==6027==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
-==6027==    by 0xCF98E6: av_malloc (mem.c:87)
-==6027==    by 0xCF9AED: av_mallocz (mem.c:238)
-==6027==    by 0x220A89: muxer_img_conv_init (muxer.c:202)
-==6027==    by 0x220A89: muxer_new (muxer.c:87)
-==6027==    by 0x220096: vlt_loop (vlt.c:24)
-==6027==    by 0x220290: vlt_start (vlt.c:83)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027== 
-[INFO] demuxer.c:158    | DEMUXER:'avcodec_read_frame': End of file
-==6027== Invalid free() / delete / delete[] / realloc()
-==6027==    at 0x4C2CDDB: free (vg_replace_malloc.c:530)
-==6027==    by 0x2210D0: muxer_free (muxer.c:164)
-==6027==    by 0x2200CB: vlt_loop (vlt.c:59)
-==6027==    by 0x220290: vlt_start (vlt.c:83)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027==  Address 0xa3a3a3a3a3a3a3a3 is not stack'd, malloc'd or (recently) free'd
-==6027== 
-[libx264 @ 0x20149440] frame I:97    Avg QP:27.01  size: 19952
-[libx264 @ 0x20149440] frame P:741   Avg QP:32.16  size:  1121
-[libx264 @ 0x20149440] frame B:572   Avg QP:34.53  size:   429
-[libx264 @ 0x20149440] consecutive B-frames: 42.2%  8.8%  7.0% 42.0%
-[libx264 @ 0x20149440] mb I  I16..4: 13.6% 61.5% 24.9%
-[libx264 @ 0x20149440] mb P  I16..4:  1.2%  2.5%  0.2%  P16..4: 25.6%  5.6%  2.4%  0.0%  0.0%    skip:62.5%
-[libx264 @ 0x20149440] mb B  I16..4:  1.6%  0.8%  0.0%  B16..8: 19.4%  2.1%  0.1%  direct: 2.4%  skip:73.6%  L0:51.7% L1:45.8% BI: 2.5%
-[libx264 @ 0x20149440] final ratefactor: 29.55
-[libx264 @ 0x20149440] 8x8 transform intra:59.3% inter:68.5%
-[libx264 @ 0x20149440] coded y,uvDC,uvAC intra: 54.4% 62.7% 26.6% inter: 3.8% 5.4% 0.1%
-[libx264 @ 0x20149440] i16 v,h,dc,p: 38% 35% 13% 15%
-[libx264 @ 0x20149440] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 23% 17% 23%  5%  6%  6%  7%  6%  7%
-[libx264 @ 0x20149440] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 19% 16% 14%  8%  9%  9%  8%  8%  8%
-[libx264 @ 0x20149440] i8c dc,h,v,p: 54% 24% 15%  8%
-[libx264 @ 0x20149440] Weighted P-Frames: Y:2.3% UV:1.2%
-[libx264 @ 0x20149440] ref P L0: 78.8% 21.2%
-[libx264 @ 0x20149440] ref B L0: 86.8% 13.2%
-[libx264 @ 0x20149440] ref B L1: 96.0%  4.0%
-[libx264 @ 0x20149440] kb/s:427.16
-==6027== 
-==6027== HEAP SUMMARY:
-==6027==     in use at exit: 5,869,588 bytes in 10,663 blocks
-==6027==   total heap usage: 166,685 allocs, 156,023 frees, 168,032,645 bytes allocated
-==6027== 
-==6027== 3 bytes in 1 blocks are definitely lost in loss record 2 of 58
-==6027==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
-==6027==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
-==6027==    by 0xCF9B90: av_strdup (mem.c:256)
-==6027==    by 0xCFB5D0: av_opt_set_defaults2 (opt.c:217)
-==6027==    by 0x22BDCB: avformat_get_context_defaults (options.c:141)
-==6027==    by 0x22BDCB: avformat_alloc_context (options.c:149)
-==6027==    by 0x228DDC: avformat_alloc_output_context2 (mux.c:151)
-==6027==    by 0x220864: muxer_new (muxer.c:69)
-==6027==    by 0x220096: vlt_loop (vlt.c:24)
-==6027==    by 0x220290: vlt_start (vlt.c:83)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027== 
-==6027== 16 bytes in 1 blocks are definitely lost in loss record 11 of 58
-==6027==    at 0x4C2DDCF: realloc (vg_replace_malloc.c:785)
-==6027==    by 0x239183: avformat_new_stream (utils.c:4466)
-==6027==    by 0x220C29: muxer_add_audio_stream (muxer.c:108)
-==6027==    by 0x220C29: muxer_new (muxer.c:86)
-==6027==    by 0x220096: vlt_loop (vlt.c:24)
-==6027==    by 0x220290: vlt_start (vlt.c:83)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027== 
-==6027== 21 bytes in 1 blocks are definitely lost in loss record 12 of 58
-==6027==    at 0x4C2BADF: malloc (vg_replace_malloc.c:298)
-==6027==    by 0x4C2DE5F: realloc (vg_replace_malloc.c:785)
-==6027==    by 0xCF9B90: av_strdup (mem.c:256)
-==6027==    by 0x228E4A: avformat_alloc_output_context2 (mux.c:195)
-==6027==    by 0x220864: muxer_new (muxer.c:69)
-==6027==    by 0x220096: vlt_loop (vlt.c:24)
-==6027==    by 0x220290: vlt_start (vlt.c:83)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027== 
-==6027== 128 bytes in 1 blocks are definitely lost in loss record 29 of 58
-==6027==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
-==6027==    by 0xC2FD493: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
-==6027==    by 0xC2F91EC: FcConfigSubstituteWithPat (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
-==6027==    by 0xBC4D1C9: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
-==6027==    by 0xBC3906C: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
-==6027==    by 0xBC39AED: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
-==6027==    by 0xBC371D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
-==6027==    by 0xBC375D0: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
-==6027==    by 0xBC47691: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
-==6027==    by 0xBC3D3D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
-==6027==    by 0xBC3DB09: ass_render_frame (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
-==6027==    by 0x220626: sub_draw (sub.c:124)
-==6027== 
-==6027== 284 bytes in 1 blocks are possibly lost in loss record 32 of 58
-==6027==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
-==6027==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
-==6027==    by 0xCF98E6: av_malloc (mem.c:87)
-==6027==    by 0xCE6998: av_buffer_alloc (buffer.c:72)
-==6027==    by 0x3BA2B4: av_grow_packet (avpacket.c:139)
-==6027==    by 0x22D71A: append_packet_chunked (utils.c:289)
-==6027==    by 0x2BCA36: mov_read_packet (mov.c:7703)
-==6027==    by 0x2322AC: ff_read_packet (utils.c:856)
-==6027==    by 0x232E95: read_frame_internal (utils.c:1582)
-==6027==    by 0x233E31: av_read_frame (utils.c:1779)
-==6027==    by 0x21FDD8: demuxer_read (demuxer.c:155)
-==6027==    by 0x22009B: vlt_loop (vlt.c:27)
-==6027== 
-==6027== 448 bytes in 1 blocks are possibly lost in loss record 34 of 58
-==6027==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
-==6027==    by 0x4011E31: allocate_dtv (dl-tls.c:322)
-==6027==    by 0x40127BD: _dl_allocate_tls (dl-tls.c:539)
-==6027==    by 0x4E40189: allocate_stack (allocatestack.c:584)
-==6027==    by 0x4E40189: pthread_create@@GLIBC_2.2.5 (pthread_create.c:663)
-==6027==    by 0x21ED0E: net_init (net.c:84)
-==6027==    by 0x220227: vlt_start (vlt.c:71)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027== 
-==6027== 1,056 bytes in 1 blocks are definitely lost in loss record 37 of 58
-==6027==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
-==6027==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
-==6027==    by 0xCF98E6: av_malloc (mem.c:87)
-==6027==    by 0x61A2D2: avcodec_alloc_context3 (options.c:158)
-==6027==    by 0x2391DF: avformat_new_stream (utils.c:4482)
-==6027==    by 0x220C29: muxer_add_audio_stream (muxer.c:108)
-==6027==    by 0x220C29: muxer_new (muxer.c:86)
-==6027==    by 0x220096: vlt_loop (vlt.c:24)
-==6027==    by 0x220290: vlt_start (vlt.c:83)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027== 
-==6027== 1,304 (224 direct, 1,080 indirect) bytes in 2 blocks are definitely lost in loss record 38 of 58
-==6027==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
-==6027==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
-==6027==    by 0xCF98E6: av_malloc (mem.c:87)
-==6027==    by 0xCF9AED: av_mallocz (mem.c:238)
-==6027==    by 0x2391FD: avformat_new_stream (utils.c:4491)
-==6027==    by 0x2208D6: muxer_add_video_stream (muxer.c:125)
-==6027==    by 0x2208D6: muxer_new (muxer.c:84)
-==6027==    by 0x220096: vlt_loop (vlt.c:24)
-==6027==    by 0x220290: vlt_start (vlt.c:83)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027== 
-==6027== 2,503 (1,056 direct, 1,447 indirect) bytes in 1 blocks are definitely lost in loss record 49 of 58
-==6027==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
-==6027==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
-==6027==    by 0xCF98E6: av_malloc (mem.c:87)
-==6027==    by 0x61A2D2: avcodec_alloc_context3 (options.c:158)
-==6027==    by 0x2391DF: avformat_new_stream (utils.c:4482)
-==6027==    by 0x2208D6: muxer_add_video_stream (muxer.c:125)
-==6027==    by 0x2208D6: muxer_new (muxer.c:84)
-==6027==    by 0x220096: vlt_loop (vlt.c:24)
-==6027==    by 0x220290: vlt_start (vlt.c:83)
-==6027==    by 0x21E47C: main (main.c:103)
-==6027== 
-==6027== 31,445 (226 direct, 31,219 indirect) bytes in 3 blocks are definitely lost in loss record 53 of 58
-==6027==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
-==6027==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
-==6027==    by 0xCF98E6: av_malloc (mem.c:87)
-==6027==    by 0xCF9AED: av_mallocz (mem.c:238)
-==6027==    by 0xCE6910: av_buffer_create (buffer.c:49)
-==6027==    by 0xCE69B8: av_buffer_alloc (buffer.c:76)
-==6027==    by 0x3BA2B4: av_grow_packet (avpacket.c:139)
-==6027==    by 0x22D71A: append_packet_chunked (utils.c:289)
-==6027==    by 0x2BCA36: mov_read_packet (mov.c:7703)
-==6027==    by 0x2322AC: ff_read_packet (utils.c:856)
-==6027==    by 0x232E95: read_frame_internal (utils.c:1582)
-==6027==    by 0x234FDD: avformat_find_stream_info (utils.c:3772)
-==6027== 
-==6027== 5,406,230 (85,096 direct, 5,321,134 indirect) bytes in 3,532 blocks are definitely lost in loss record 58 of 58
-==6027==    at 0x4C2DF16: memalign (vg_replace_malloc.c:857)
-==6027==    by 0x4C2E021: posix_memalign (vg_replace_malloc.c:1020)
-==6027==    by 0xCF98E6: av_malloc (mem.c:87)
-==6027==    by 0xCF9AED: av_mallocz (mem.c:238)
-==6027==    by 0xCE6910: av_buffer_create (buffer.c:49)
-==6027==    by 0xCE69B8: av_buffer_alloc (buffer.c:76)
-==6027==    by 0x3BA2B4: av_grow_packet (avpacket.c:139)
-==6027==    by 0x22D71A: append_packet_chunked (utils.c:289)
-==6027==    by 0x2BCA36: mov_read_packet (mov.c:7703)
-==6027==    by 0x2322AC: ff_read_packet (utils.c:856)
-==6027==    by 0x232E95: read_frame_internal (utils.c:1582)
-==6027==    by 0x233E31: av_read_frame (utils.c:1779)
-==6027== 
-==6027== LEAK SUMMARY:
-==6027==    definitely lost: 87,826 bytes in 3,543 blocks
-==6027==    indirectly lost: 5,354,880 bytes in 7,065 blocks
-==6027==      possibly lost: 732 bytes in 2 blocks
-==6027==    still reachable: 426,150 bytes in 53 blocks
-==6027==         suppressed: 0 bytes in 0 blocks
-==6027== Reachable blocks (those to which a pointer was found) are not shown.
-==6027== To see them, rerun with: --leak-check=full --show-leak-kinds=all
-==6027== 
-==6027== For counts of detected and suppressed errors, rerun with: -v
-==6027== ERROR SUMMARY: 1452 errors from 13 contexts (suppressed: 0 from 0)
+valgrind --leak-check=full --leak-resolution=med ./vlt -t 'Hello, World!' -u http://127.0.0.1:4545 -a -f ../assets/sample.mp4 -l 2 
+==5761== HEAP SUMMARY:
+==5761==     in use at exit: 85,682 bytes in 75 blocks
+==5761==   total heap usage: 213,799 allocs, 213,724 frees, 212,175,082 bytes allocated
+==5761== 
+==5761== 128 bytes in 1 blocks are definitely lost in loss record 45 of 66
+==5761==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==5761==    by 0xC2FD493: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==5761==    by 0xC2F91EC: FcConfigSubstituteWithPat (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==5761==    by 0xBC4D1C9: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0xBC3906C: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0xBC39AED: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0xBC371D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0xBC375D0: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0xBC47691: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0xBC3D3D8: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0xBC3DB09: ass_render_frame (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0x220577: sub_draw (sub.c:139)
+==5761== 
+==5761== 448 bytes in 1 blocks are possibly lost in loss record 52 of 66
+==5761==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==5761==    by 0x4011E31: allocate_dtv (dl-tls.c:322)
+==5761==    by 0x40127BD: _dl_allocate_tls (dl-tls.c:539)
+==5761==    by 0x4E40189: allocate_stack (allocatestack.c:584)
+==5761==    by 0x4E40189: pthread_create@@GLIBC_2.2.5 (pthread_create.c:663)
+==5761==    by 0x21EC7E: net_init (net.c:84)
+==5761==    by 0x21FFF7: vlt_start (vlt.c:76)
+==5761==    by 0x21E37C: main (main.c:103)
+==5761== 
+==5761== 3,502 (128 direct, 3,374 indirect) bytes in 1 blocks are definitely lost in loss record 62 of 66
+==5761==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==5761==    by 0xBC35057: ass_new_track (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0xBC350AD: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0xBC35143: ass_read_memory (in /usr/lib/x86_64-linux-gnu/libass.so.5.3.2)
+==5761==    by 0x220547: sub_get_track (sub.c:85)
+==5761==    by 0x220547: sub_draw (sub.c:136)
+==5761==    by 0x220F53: muxer_pack_video (muxer.c:266)
+==5761==    by 0x21FED7: vlt_loop (vlt.c:41)
+==5761==    by 0x220060: vlt_start (vlt.c:88)
+==5761==    by 0x21E37C: main (main.c:103)
+==5761== 
+==5761== LEAK SUMMARY:
+==5761==    definitely lost: 256 bytes in 2 blocks
+==5761==    indirectly lost: 3,374 bytes in 13 blocks
+==5761==      possibly lost: 448 bytes in 1 blocks
+==5761==    still reachable: 81,604 bytes in 59 blocks
+==5761==         suppressed: 0 bytes in 0 blocks
+==5761== Reachable blocks (those to which a pointer was found) are not shown.
+==5761== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==5761== 
+==5761== For counts of detected and suppressed errors, rerun with: -v
+==5761== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 0 from 0)

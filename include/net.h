@@ -11,7 +11,9 @@ extern "C" {
 	char*
 	net_subtitle(void);
 	void
-	net_clear(void);
+	net_close(void);
+        void
+	net_clear_subtitle(void);
 
 #ifdef __cplusplus
 }

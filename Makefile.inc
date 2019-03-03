@@ -7,11 +7,11 @@ inc         := ../include
 inc_flags   := -I$(inc)
 
 LINKFLAGS   := 
-#LDFLAGS     :=  -lpthread
-LDFLAGS     := -fsanitize=address
+LDFLAGS     :=  -lpthread
+#LDFLAGS     := -fsanitize=address
 
-#CFLAGS   := -std=gnu11 -O2 -fPIC -Wall -g -Wpedantic
-CFLAGS   := -std=gnu11 -O2 -fPIC -Wall -g -Wpedantic -fsanitize=address
+CFLAGS   := -std=gnu11 -O2 -fPIC -Wall -g -Wpedantic
+#CFLAGS   := -std=gnu11 -O2 -fPIC -Wall -g -Wpedantic -fsanitize=address
 #DBGFLAGS := $(CFLAGS) -g -DDEBUG
 #CFLAGS   += $(CFLAGS) 
 

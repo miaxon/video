@@ -22,13 +22,13 @@ vlt_loop(param_t *param) {
 	demuxer_t *inp = NULL;
 	inp = demuxer_new(param->file, param->audio);
 	muxer_new(param->stream, inp);
-	//int n = 0;
+	int n = 0;
 	int	ret =  PACKET_UNKNOWN;
 	while ( (ret = demuxer_read()) >= 0) {
-		//if(n++ > 100){
-		//	INFO("VLT: break %d", n);
-		//	break;
-		//}
+		if(n++ > 100){
+			INFO("VLT: break %d", n);
+			break;
+		}
 			
 		switch (ret) {
 			case PACKET_AUDIO:

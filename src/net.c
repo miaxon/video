@@ -10,15 +10,15 @@
 #include "err.h"
 #include "urldec.h"
 
-#define SUB_SIZE 256
+#define NET_SUB_SIZE 256
 
 #define LOCK(x) if (pthread_mutex_lock(&x) != 0)\
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_lock");
 #define UNLOCK(x) if (pthread_mutex_unlock(&x) != 0)\
 		ERR_SYS("HTTP:'%s' failed: %s", "pthread_mutex_unlock");
 
-static char sub[SUB_SIZE]; // provided for internal use
-static char txt[SUB_SIZE]; // provided for external use
+static char sub[NET_SUB_SIZE]; // provided for internal use
+static char txt[NET_SUB_SIZE]; // provided for external use
 static char *url;
 static char *res;
 static unsigned const char *html;
@@ -49,8 +49,8 @@ static int   net_parse_request(char *str);
 void
 net_clear(void) {
 	LOCK(mutex)
-	memset(sub, 0, SUB_SIZE);
-	memset(txt, 0, SUB_SIZE);
+	memset(sub, 0, NET_SUB_SIZE);
+	memset(txt, 0, NET_SUB_SIZE);
 	UNLOCK(mutex)
 }
 
@@ -59,8 +59,8 @@ net_init(char *t, char *u, char *r) {
 	int ret = 0;
 	pthread_t th;
 	pthread_attr_t attr;
-	memset(sub, 0, SUB_SIZE);
-	strncpy(sub, t, SUB_SIZE - 1);
+	memset(sub, 0, NET_SUB_SIZE);
+	strncpy(sub, t, NET_SUB_SIZE - 1);
 	url  = u;
 	res  = r;
 	entry_t entry = (entry_t) net_thread;
@@ -120,8 +120,8 @@ static void
 net_set_subtitle(const char* str) {
 	LOCK(mutex)
 
-	memset(sub, 0, SUB_SIZE);
-	strncpy(sub, str, SUB_SIZE - 1);
+	memset(sub, 0, NET_SUB_SIZE);
+	strncpy(sub, str, NET_SUB_SIZE - 1);
 	INFO("HTTP:set new subtitle text '%s'", sub);
 
 	UNLOCK(mutex)
@@ -131,8 +131,8 @@ char*
 net_subtitle(void) {
 	LOCK(mutex)
 
-	memset(txt, 0, SUB_SIZE);
-	strncpy(txt, sub, SUB_SIZE - 1);
+	memset(txt, 0, NET_SUB_SIZE);
+	strncpy(txt, sub, NET_SUB_SIZE - 1);
 
 	UNLOCK(mutex)
 	return txt;

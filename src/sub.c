@@ -3,6 +3,7 @@
 #include "sub.h"
 #include "log.h"
 #include "err.h"
+//#include "font.h"
 
 #define _r(c)  ((c)>>24)
 #define _g(c)  (((c)>>16)&0xFF)
@@ -44,10 +45,13 @@
 #define ASS_DEFAULT_FONT        "Arial"
 #define ASS_DEFAULT_FONT_SIZE   16
 #define ASS_DEFAULT_TEXT        ""
+#define ASS_SUB_SIZE            256 // equal NET_SUB_SIZE
 
 static ASS_Library  *lib;
 static ASS_Renderer *rnd;
 static ASS_Image    *img;
+static ASS_Track    *track;
+static char current_sub[256];
 static int width;
 static int height;
 
@@ -57,7 +61,7 @@ static ASS_Track* sub_get_track(const char *sub);
 
 static void
 sub_msg_callback(int level, const char *fmt, va_list va, void *data) {
-	if (level > 3)
+	if (level > 5)
 		return;
 	printf("libass: ");
 	vprintf(fmt, va);
@@ -68,13 +72,13 @@ static ASS_Track*
 sub_get_track(const char *sub) {
 
 	char *buf  = av_asprintf(
-							ASS_TRACK_STRING,
-							AV_STRINGIFY(LIBAVCODEC_VERSION),
-							width,
-							height,
-							ASS_DEFAULT_FONT,
-							ASS_DEFAULT_FONT_SIZE,
-							sub ? sub : ASS_DEFAULT_TEXT);
+		ASS_TRACK_STRING,
+		AV_STRINGIFY(LIBAVCODEC_VERSION),
+		width,
+		height,
+		ASS_DEFAULT_FONT,
+		ASS_DEFAULT_FONT_SIZE,
+		sub ? sub : ASS_DEFAULT_TEXT);
 
 	int size = strlen((const char*) buf);
 	//INFO("ASS: %s", buf);
@@ -99,31 +103,42 @@ sub_init(int w, int h) {
 		ERR_EXIT("SUB:'%s' failed", "ass_render_init");
 	}
 
-	ass_set_use_margins(rnd, 0);
+	memset(current_sub, 0, ASS_SUB_SIZE);
+	track  = NULL;
+	//ass_set_use_margins(rnd, 0);
 
-	ass_set_font_scale(rnd, 1.0 );
+	//ass_set_font_scale(rnd, 1.0 );
 
-	ass_set_line_spacing(rnd, 0.0 );
+	//ass_set_line_spacing(rnd, 0.0 );
 
 	ass_set_hinting(rnd, ASS_HINTING_NONE );
 
 	ass_set_frame_size(rnd, width, height);
-
-	ass_set_fonts(rnd, NULL, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
+	//ass_add_font(lib, "dvs", (char*)dvs_ttf, (int)dvs_ttf_len);
+	ass_set_fonts(rnd, NULL, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, NULL, 0);
+	//ass_set_fonts(rnd, NULL, NULL, ASS_FONTPROVIDER_AUTODETECT, NULL, 0);
 
 	ass_set_message_cb(lib, sub_msg_callback, NULL);
 }
 
 int
 sub_draw(AVFrame *frame, const char* sub) {
+	if(!strncmp(sub, current_sub, ASS_SUB_SIZE - 1)) {
+		sub_blend(frame, img);
+		return 0;
+	}
+	
+	memset(current_sub, 0, ASS_SUB_SIZE);
+	if(track) {
+		ass_free_track(track);
+	}
 
-	ASS_Track *track  = NULL;
 	if ((track = sub_get_track(sub)) == NULL) {
 		return -1;
 	}
 	img = ass_render_frame(rnd, track, 0, NULL);
 	sub_blend(frame, img);
-	ass_free_track(track);
+	strncpy(current_sub, sub, ASS_SUB_SIZE - 1);
 	return 0;
 }
 

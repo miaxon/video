@@ -91,9 +91,9 @@ sub_init(int w, int h) {
 	ass_set_hinting(rnd, ASS_HINTING_NONE );
 
 	ass_set_frame_size(rnd, width, height);
-	//ass_add_font(lib, "dvs", (char*)dvs_ttf, (int)dvs_ttf_len);
+	//ass_add_font(lib, "lsi", (char*)lsi_ttf, (int)lsi_ttf_len);
 	ass_set_fonts(rnd, NULL, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, NULL, 0);
-	//ass_set_fonts(rnd, NULL, NULL, ASS_FONTPROVIDER_AUTODETECT, NULL, 0);
+	//ass_set_fonts(rnd, NULL, NULL, ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
 
 	ass_set_message_cb(lib, sub_msg_callback, NULL);
 }
@@ -115,15 +115,21 @@ sub_draw(AVFrame *frame, const char* sub) {
 							sub ? sub : ASS_DEFAULT_TEXT);
 
 	int size = strlen((const char*) buf);
-	//INFO("ASS: %s", buf);
+	
 	track = ass_read_memory(lib, buf, size, "utf-8");
 	if (!track) {
 		ERROR("SUB:'%s' failed", "ass_read_memory");
 		return -1;
 	}
 	av_free(buf);
+	
 	img = ass_render_frame(rnd, track, 0, NULL);
+	if (!img) {
+		ERROR("SUB:'%s' failed", "ass_render_frame");
+		return -1;
+	}
 	sub_blend(frame, img);
+	
 	ass_free_track(track);
 	memset(current_sub, 0, ASS_SUB_SIZE);
 	strncpy(current_sub, sub, ASS_SUB_SIZE - 1);

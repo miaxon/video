@@ -13,7 +13,7 @@ FFMPEG_LIBS=    libavdevice                        \
                 libavutil                          \
 
 #LDFLAGS += -lavformat -lavcodec -lswscale -lavutil -lavfilter -lswresample -lavdevice -pthread -lfdk-aac -lvorbis -lmp3lame -lx264 -lrt -lm -lz -lrt -lX11 -llzma -lbz2 -lvdpau
-LIB_AVLDFLAGS  := $(shell pkg-config --libs $(FFMPEG_LIBS))
+LIB_AVLDFLAGS  := $(shell pkg-config --libs  $(FFMPEG_LIBS))
 LIB_AVCFLAGS   := $(shell pkg-config --cflags $(FFMPEG_LIBS))
 LIB_ASSLDFLAGS := $(shell pkg-config --libs libass)
 

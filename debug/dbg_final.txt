@@ -1,0 +1,117 @@
+valgrind --leak-check=full --leak-resolution=med --track-origins=yes ./vlt -t 'Hello, World!' -u http://127.0.0.1:4545 -a -f ../assets/sample.mp4 -l 1 -s udp://127.0.0.1:1234?pkt_size=1316
+==9694== Memcheck, a memory error detector
+==9694== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==9694== Using Valgrind-3.12.0.SVN and LibVEX; rerun with -h for copyright info
+==9694== Command: ./vlt -t Hello,\ World! -u http://127.0.0.1:4545 -a -f ../assets/sample.mp4 -l 1 -s udp://127.0.0.1:1234?pkt_size=1316
+==9694== 
+--9694-- WARNING: Serious error when reading debug info
+--9694-- When reading debug info from /mnt/sdc/alexcon/src/video/bin/vlt:
+--9694-- get_Form_contents: DW_FORM_strp points outside .debug_str
+[INFO] main.c:139       | 
+using params:
+        file:      '../assets/sample.mp4'
+        stream:    'udp://127.0.0.1:1234?pkt_size=1316'
+        loop:       1
+        http:      'http://127.0.0.1:4545'
+        resource:  'sub'
+        subtitle:  'Hello, World!'
+        audio:      Yes
+        debug:      No
+
+[INFO] vlt.c:86         | loop 1
+[INFO] net.c:152        | HTTP: start http listen: http://127.0.0.1:4545
+[INFO] demuxer.c:64     | DEMUXER: audio stream enabled
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '../assets/sample.mp4':
+  Metadata:
+    major_brand     : mp42
+    minor_version   : 1
+    compatible_brands: mp42avc1
+    creation_time   : 2010-02-09T01:55:39.000000Z
+  Duration: 00:01:00.10, start: 0.000000, bitrate: 733 kb/s
+    Stream #0:0(eng): Audio: aac (LC) (mp4a / 0x6134706D), 22050 Hz, stereo, fltp, 65 kb/s (default)
+    Metadata:
+      creation_time   : 2010-02-09T01:55:39.000000Z
+      handler_name    : Apple Sound Media Handler
+    Stream #0:1(eng): Video: h264 (Constrained Baseline) (avc1 / 0x31637661), yuv420p(tv, smpte170m/smpte170m/bt709), 640x360, 612 kb/s, 23.96 fps, 24 tbr, 600 tbn, 1200 tbc (default)
+    Metadata:
+      creation_time   : 2010-02-09T01:55:39.000000Z
+      handler_name    : Apple Video Media Handler
+    Stream #0:2(eng): Data: none (rtp  / 0x20707472), 45 kb/s
+    Metadata:
+      creation_time   : 2010-02-09T01:55:39.000000Z
+      handler_name    : hint media handler
+    Stream #0:3(eng): Data: none (rtp  / 0x20707472), 5 kb/s
+    Metadata:
+      creation_time   : 2010-02-09T01:55:39.000000Z
+      handler_name    : hint media handler
+[libx264 @ 0x20004740] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX
+[libx264 @ 0x20004740] profile High, level 3.0
+[ass] Shaper: FriBidi 0.19.7 (SIMPLE) HarfBuzz-ng 1.4.2 (COMPLEX)
+[ass] Using font provider fontconfig
+Output #0, mpegts, to 'udp://127.0.0.1:1234?pkt_size=1316':
+  Metadata:
+    encoder         : Lavf58.26.101
+    Stream #0:0: Video: h264 (libx264) (High), none, 640x360, q=-1--1, 400 kb/s, 90k tbn
+    Stream #0:1: Audio: aac (LC) (mp4a / 0x6134706D), 22050 Hz, stereo, fltp, 65 kb/s
+libass: Added subtitle file: <memory> (2 styles, 1 events)
+libass: fontselect: (Arial, 400, 0) -> /usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf, 0, LiberationSans
+[INFO] demuxer.c:160    | DEMUXER:'avcodec_read_frame': End of file
+[libx264 @ 0x20004740] frame I:97    Avg QP:26.93  size: 20047
+[libx264 @ 0x20004740] frame P:727   Avg QP:32.22  size:  1123
+[libx264 @ 0x20004740] frame B:591   Avg QP:34.37  size:   433
+[libx264 @ 0x20004740] consecutive B-frames: 40.6%  8.8%  7.4% 43.3%
+[libx264 @ 0x20004740] mb I  I16..4: 13.4% 61.7% 24.9%
+[libx264 @ 0x20004740] mb P  I16..4:  1.1%  2.6%  0.2%  P16..4: 25.6%  5.6%  2.4%  0.0%  0.0%    skip:62.5%
+[libx264 @ 0x20004740] mb B  I16..4:  1.5%  0.8%  0.0%  B16..8: 19.4%  2.2%  0.1%  direct: 2.4%  skip:73.6%  L0:51.7% L1:45.9% BI: 2.4%
+[libx264 @ 0x20004740] final ratefactor: 29.49
+[libx264 @ 0x20004740] 8x8 transform intra:59.8% inter:69.2%
+[libx264 @ 0x20004740] coded y,uvDC,uvAC intra: 54.6% 62.8% 26.8% inter: 3.7% 5.4% 0.1%
+[libx264 @ 0x20004740] i16 v,h,dc,p: 37% 35% 13% 15%
+[libx264 @ 0x20004740] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 23% 17% 23%  5%  6%  6%  6%  6%  7%
+[libx264 @ 0x20004740] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 19% 16% 14%  8%  9%  9%  8%  8%  8%
+[libx264 @ 0x20004740] i8c dc,h,v,p: 54% 24% 15%  8%
+[libx264 @ 0x20004740] Weighted P-Frames: Y:2.3% UV:1.2%
+[libx264 @ 0x20004740] ref P L0: 78.6% 21.4%
+[libx264 @ 0x20004740] ref B L0: 86.9% 13.1%
+[libx264 @ 0x20004740] ref B L1: 95.9%  4.1%
+[libx264 @ 0x20004740] kb/s:426.44
+==9694==
+==9694== HEAP SUMMARY:
+==9694==     in use at exit: 78,667 bytes in 47 blocks
+==9694==   total heap usage: 106,743 allocs, 106,696 frees, 86,427,742 bytes allocated
+==9694==
+==9694== 128 bytes in 1 blocks are definitely lost in loss record 23 of 39
+==9694==    at 0x4C2BBAF: malloc (vg_replace_malloc.c:299)
+==9694==    by 0xC2FD493: ??? (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==9694==    by 0xC2F91EC: FcConfigSubstituteWithPat (in /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0)
+==9694==    by 0xBC4DA29: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.9.0.1)
+==9694==    by 0xBC394CC: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.9.0.1)
+==9694==    by 0xBC39F5D: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.9.0.1)
+==9694==    by 0xBC37608: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.9.0.1)
+==9694==    by 0xBC37A00: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.9.0.1)
+==9694==    by 0xBC47CC1: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.9.0.1)
+==9694==    by 0xBC3D81D: ??? (in /usr/lib/x86_64-linux-gnu/libass.so.9.0.1)
+==9694==    by 0xBC3DF4C: ass_render_frame (in /usr/lib/x86_64-linux-gnu/libass.so.9.0.1)
+==9694==    by 0x222D81: sub_draw (sub.c:126)
+==9694==
+==9694== 448 bytes in 1 blocks are possibly lost in loss record 28 of 39
+==9694==    at 0x4C2DBC5: calloc (vg_replace_malloc.c:711)
+==9694==    by 0x4011E31: allocate_dtv (dl-tls.c:322)
+==9694==    by 0x40127BD: _dl_allocate_tls (dl-tls.c:539)
+==9694==    by 0x4E40189: allocate_stack (allocatestack.c:584)
+==9694==    by 0x4E40189: pthread_create@@GLIBC_2.2.5 (pthread_create.c:663)
+==9694==    by 0x2214E6: net_init (net.c:80)
+==9694==    by 0x2227E2: vlt_start (vlt.c:70)
+==9694==    by 0x220C1C: main (main.c:103)
+==9694==
+==9694== LEAK SUMMARY:
+==9694==    definitely lost: 128 bytes in 1 blocks
+==9694==    indirectly lost: 0 bytes in 0 blocks
+==9694==      possibly lost: 448 bytes in 1 blocks
+==9694==    still reachable: 78,091 bytes in 45 blocks
+==9694==         suppressed: 0 bytes in 0 blocks
+==9694== Reachable blocks (those to which a pointer was found) are not shown.
+==9694== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==9694==
+==9694== For counts of detected and suppressed errors, rerun with: -v
+==9694== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)

@@ -2,3 +2,14 @@
 apt install libass5 libzmq5 libx264-148 libx265-95 libfdk-aac1 libopus0 libmp3lame0 libvpx4
 dpkg -i ffmpeg_4.1-1_amd64.deb
 
+
+
+sudo apt install libopenal-dev
+sudo apt install libzmq5-dev
+sudo apt install libopencv-core-dev
+sudo apt install libopencv-imgproc-dev
+sudo apt install flite-dev
+sudo apt install libssh-dev
+sudo apt install libx264-dev
+sudo apt install libx265-dev
+sudo apt install libomxil-bellagio-dev
